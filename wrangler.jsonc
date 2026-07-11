@@ -1,0 +1,11 @@
+{
+  // Cloudflare Workers (Static Assets) 設定
+  // houjin-navi は src/ 配下の静的サイト（HTML/CSS/JS のみ・サーバーロジックなし）。
+  // main を指定しない「アセットのみ Worker」として配信する。
+  "name": "houjin-navi",
+  "compatibility_date": "2026-07-11",
+  "assets": {
+    // GitHub push → Workers Builds が ./src を静的アセットとして公開する
+    "directory": "./src"
+  }
+}
