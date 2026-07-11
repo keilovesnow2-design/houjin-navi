@@ -1,0 +1,10 @@
+{
+  "name": "houjin-navi",
+  "version": "1.0.0",
+  "description": "合同会社設立ナビ — ローカル完結型の設立ナビ Web アプリ",
+  "private": true,
+  "scripts": {
+    "test": "node --test"
+  },
+  "license": "MIT"
+}
