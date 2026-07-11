@@ -111,6 +111,48 @@ test('collectDiagnosisInsights: 選んだ選択肢のinsightを集める', () =>
   assert.ok(ins.some(s => s.includes('法人成り')));
 });
 
+// ---- 「わからない」回避ルート ----
+test('全質問に「わからない」選択肢(unsure)が末尾に付く', () => {
+  Q.forEach(q => {
+    const last = q.options[q.options.length - 1];
+    assert.ok(last.unsure === true, q.id + 'にunsureなし');
+    assert.ok(last.label.includes('わからない'));
+  });
+});
+test('countUnsure: わからない選択数を数える', () => {
+  const lastIdx = id => Q.find(q => q.id === id).options.length - 1; // 質問ごとに末尾index
+  const ans = { q1: lastIdx('q1'), q2: lastIdx('q2'), q3: 0 }; // q1,q2 がわからない
+  assert.strictEqual(HN.countUnsure(ans, Q), 2);
+});
+
+// ---- 理想フィット分析 ----
+test('analyzeIdeal: 理想=合同 & 回答が合同寄り→aligned', () => {
+  // q10 合同で十分(2), q1 専業(1), q7 リスクあり(1) など合同寄り
+  const ans = { q1: 1, q2: 1, q3: 2, q4: 1, q5: 1, q6: 1, q7: 1, q8: 1, q9: 1, q10: 1 };
+  const A = HN.analyzeIdeal(ans, Q, TYPES, 'llc');
+  assert.ok(A.idealPct > 0);
+  assert.ok(typeof A.aligned === 'boolean');
+  assert.ok(TYPES.includes(A.alt));
+});
+test('analyzeIdeal: 理想=株式 だが超堅実回答→alignedでなく代替案が出る', () => {
+  const ideal = 'kk';
+  const ans = { q1: 0, q2: 0, q3: 0, q4: 0, q5: 0, q6: 0, q7: 0, q8: 0, q9: 0, q10: 0 }; // 全て個人事業寄り
+  const A = HN.analyzeIdeal(ans, Q, TYPES, ideal);
+  assert.strictEqual(A.aligned, false);
+  assert.notStrictEqual(A.alt, ideal); // 代替案は理想と別
+  assert.strictEqual(A.alt, 'kojin');  // 堅実回答なので個人事業を提案
+});
+test('IDEAL_REQUIREMENTS: 全タイプに項目があり、数値項目に出典', () => {
+  TYPES.forEach(t => {
+    const reqs = DATA.IDEAL_REQUIREMENTS[t];
+    assert.ok(Array.isArray(reqs) && reqs.length > 0, t + 'の必要事項なし');
+    reqs.forEach(r => { if (/\d/.test(r.text) && r.source) assert.ok(/^https?:\/\//.test(r.source.url)); });
+  });
+  // 法人の維持コスト（均等割）に出典が付いているか
+  const llcReq = DATA.IDEAL_REQUIREMENTS.llc.find(r => r.text.includes('均等割'));
+  assert.ok(llcReq && llcReq.source, '均等割に出典なし');
+});
+
 // ---- 書類生成 ----
 test('generateTeikan(合同): 入力反映＋ドラフト注記', () => {
   const t = HN.generateTeikan(LLC);

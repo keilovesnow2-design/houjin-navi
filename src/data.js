@@ -31,8 +31,8 @@
 
   var META = {
     appName: '法人ナビ',
-    tagline: '自分に合う「事業の形」を診断して、開業・設立まで導く',
-    version: '2.0',
+    tagline: '理想の形から、開業・設立まで導く',
+    version: '2.1',
     lastVerified: '2026-07-11',
     scopeNote: '手続きナビは現在「個人事業・合同会社」に対応。株式会社・一般社団法人は診断と概要のみ（詳細ガイドは順次対応）。現物出資・法人が社員・許認可業種などの特殊ケースは対象外です。',
     disclaimer: '本ツールは情報提供を目的とした支援ツールであり、法的助言・税務助言・登記代理ではありません。診断結果は「向いている傾向」の目安です。制度・税率・様式は改正されることがあります。実際の判断・提出前に必ず公式情報および税理士・司法書士等の専門家でご確認ください。'
@@ -274,8 +274,41 @@
     }
   };
 
+  // 各質問に「わからない」回避ルートを追加（迷う人は身軽で後戻りできる個人事業へ軽く寄せる）
+  DIAGNOSIS.questions.forEach(function (q) {
+    q.options.push({ label: 'わからない・まだ決めていない', weights: { kojin: 1 }, unsure: true });
+  });
+
+  // 理想別「必要なこと・覚悟」（理想フィット診断の結果で表示。数値は一次情報で確認済み）
+  var IDEAL_REQUIREMENTS = {
+    kojin: [
+      { text: '開業届を税務署へ提出する（費用0円・登記不要）', source: SOURCES.NTA_KAIGYO },
+      { text: '確定申告を自分で行う（青色申告なら最大65万円控除も）', source: SOURCES.NTA_AOIRO },
+      { text: '「無限責任」——事業の負債は個人の財産で負う点を理解しておく', source: null }
+    ],
+    llc: [
+      { text: '設立費用 約6万円〜＋当面の運転資金を用意する', source: SOURCES.MOJ_LLC },
+      { text: '社長ひとりでも社会保険（健康保険・厚生年金）に加入する', source: SOURCES.NENKIN_TEKIYO },
+      { text: '赤字でも法人住民税の均等割（年約7万円〜）を払う覚悟', source: SOURCES.SOUMU_JUMINZEI },
+      { text: '定款の作成・法務局への設立登記（自分で or 専門家に依頼）', source: SOURCES.MOJ_LLC }
+    ],
+    kk: [
+      { text: '設立費用 約20〜25万円を用意する', source: SOURCES.MOJ_HOUMUKYOKU },
+      { text: '定款は公証人の認証が必要（合同会社と違い必須）', source: SOURCES.MOJ_HOUMUKYOKU },
+      { text: '社長ひとりでも社会保険に加入する', source: SOURCES.NENKIN_TEKIYO },
+      { text: '赤字でも法人住民税の均等割（年約7万円〜）を払う覚悟', source: SOURCES.SOUMU_JUMINZEI },
+      { text: '決算公告など、会社としての運営義務を負う', source: null }
+    ],
+    shadan: [
+      { text: '設立時に社員が2名以上必要', source: SOURCES.MOJ_HOUMUKYOKU },
+      { text: '定款は公証人の認証が必要', source: SOURCES.MOJ_HOUMUKYOKU },
+      { text: '利益を構成員へ分配できない（非営利）点を理解しておく', source: null },
+      { text: '社会保険への加入が必要', source: SOURCES.NENKIN_TEKIYO }
+    ]
+  };
+
   var DATA = { SOURCES: SOURCES, META: META, DIAGNOSIS: DIAGNOSIS, FLOWS: FLOWS,
-    TYPE_KEYS: ['kojin', 'llc', 'kk', 'shadan'] };
+    IDEAL_REQUIREMENTS: IDEAL_REQUIREMENTS, TYPE_KEYS: ['kojin', 'llc', 'kk', 'shadan'] };
 
   global.HN_DATA = DATA;
   if (typeof module !== 'undefined' && module.exports) module.exports = DATA;
