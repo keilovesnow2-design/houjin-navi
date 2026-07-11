@@ -317,19 +317,21 @@
     var unsureNote = unsure >= 4 ? '<p class="muted small">「わからない」が多め（' + unsure + '問）です。焦らず、まずは身軽な個人事業から始めるのも良い一手です。</p>' : '';
     var insHtml = insights.length ? '<div class="ins-box"><b>👀 あわせて知っておきたい点</b><ul class="ins">' + insights.map(function (s) { return '<li>' + esc(s) + '</li>'; }).join('') + '</ul></div>' : '';
     var altCta = A.alt !== ideal ? '<button class="ghost" data-type="' + A.alt + '">まず' + esc(altShort) + 'から始める（相性' + A.altMatch + '%）→</button>' : '';
+    // 「もっと近づくヒント」は“上を目指す”理想のときだけ（個人事業=出発点では出さない／下げる案内をしない）
     var hints = HN.gapHints(state.diag, Q.questions, ideal, 3);
-    var hintsHtml = (A.idealMatch < 100 && hints.length)
-      ? '<section class="card grow"><h3>🌱 こうなると「' + esc(t.short) + '」にもっと近づきます</h3><ul class="reqs">' +
-        hints.map(function (h) { return '<li>「' + esc(h.q) + '」→ <b>' + esc(h.target) + '</b> の状況になったとき</li>'; }).join('') +
-        '</ul><p class="muted small">今すぐでなくてOK。タイミングが来たら踏み出せます。</p></section>'
+    var hintsHtml = (ideal !== 'kojin' && A.idealMatch < 100 && hints.length)
+      ? '<section class="card grow"><h3>🌱 「' + esc(t.short) + '」の理想に近づくためのヒント</h3><ul class="reqs">' +
+        hints.map(function (h) { return '<li>「' + esc(h.q) + '」が <b>' + esc(h.target) + '</b> になってきたら、ぐっと近づきます</li>'; }).join('') +
+        '</ul><p class="muted small">今すぐでなくてOK。事業が育つほど' + esc(t.short) + 'に近づきます。</p></section>'
       : '';
+    var prepHtml = '<section class="card"><h3>🧭 「' + esc(t.name) + '」を始めるために準備しておくこと</h3><ul class="reqs">' + reqs + '</ul>' + srcLink(t.source) + '</section>';
     return '<section class="card ideal-hero"><h2>🎯 あなたの理想：' + esc(t.name) + '</h2>' +
       '<div class="fitrow big"><span class="fitname">' + esc(t.short) + 'との相性</span><div class="fitbar"><span style="width:' + A.idealMatch + '%"></span></div><b>' + A.idealMatch + '%</b></div>' +
       '<p class="tiermsg">' + tr.emoji + ' ' + esc(tr.msg) + '</p>' +
       '<p class="canline">💪 相性は「今の状況との近さ」で、「できる・できない」ではありません。<b>やると決めれば実現できます</b>（' + esc(t.short) + 'は ' + esc(t.costText) + '・自分でも手続き可能）。</p></section>' +
       strengthsHtml +
+      prepHtml +
       hintsHtml +
-      '<section class="card"><h3>🧭 近づくために準備しておくと安心なこと</h3><ul class="reqs">' + reqs + '</ul>' + srcLink(t.source) + '</section>' +
       '<section class="card"><h3>💬 あなたへのおすすめ</h3><p>' + msg + '</p>' + unsureNote + insHtml +
       '<div class="cta"><button class="primary" data-type="' + ideal + '">' + esc(t.short) + 'の手続きに進む →</button> ' + altCta + '</div></section>' +
       reassureBlock();
