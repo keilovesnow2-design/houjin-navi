@@ -292,8 +292,8 @@
   function tier(match) {
     if (match >= 80) return { emoji: '🎉', msg: 'この理想にとても近いです！自信を持って進んで大丈夫。' };
     if (match >= 60) return { emoji: '👍', msg: 'いい線いっています！あと少しで理想に届きます。' };
-    if (match >= 40) return { emoji: '🌱', msg: '今は準備段階。ここを押さえれば着実に近づけます。' };
-    return { emoji: '🌱', msg: '今はスタート地点。あなたの理想は、これから十分に目指せます。' };
+    if (match >= 40) return { emoji: '🌱', msg: '今は準備段階。大丈夫、ここを押さえれば着実に近づけます。' };
+    return { emoji: '🌱', msg: '今はスタート地点。安心してください、あなたの理想はこれから十分に目指せます。' };
   }
   // 結果の最後に必ず入れる安心メッセージ（良くても悪くても）
   function reassureBlock() {
@@ -313,7 +313,7 @@
       : '';
     var msg = A.aligned
       ? '🎉 あなたの回答は理想とバッチリ同じ方向です。下の「準備すること」を整えれば、そのまま' + esc(t.short) + 'を目指せます。'
-      : 'あなたの理想「' + esc(t.name) + '」はすてきな目標です。いまのあなたには「<b>' + esc(TYPES[A.alt].name) + '</b>」もよく合っています（相性 <b>' + A.altMatch + '%</b>）。理想に届くかは<b>順番とタイミングの問題</b>。<b>まず' + esc(altShort) + 'から始めて、将来' + esc(t.short) + 'へ（法人成り）</b>という道も王道です。<b>理想は変えなくて大丈夫。</b>';
+      : 'あなたの理想「' + esc(t.name) + '」はすてきな目標です。いまのあなたには「<b>' + esc(TYPES[A.alt].name) + '</b>」もよく合っています（相性 <b>' + A.altMatch + '%</b>）。<b>安心してください、「できない」わけではありません。</b>理想に届くかは<b>順番とタイミングの問題</b>。<b>まず' + esc(altShort) + 'から始めて、将来' + esc(t.short) + 'へ（法人成り）</b>という道も王道です。<b>理想は変えなくて大丈夫。</b>';
     var unsureNote = unsure >= 4 ? '<p class="muted small">「わからない」が多め（' + unsure + '問）です。焦らず、まずは身軽な個人事業から始めるのも良い一手です。</p>' : '';
     var insHtml = insights.length ? '<div class="ins-box"><b>👀 あわせて知っておきたい点</b><ul class="ins">' + insights.map(function (s) { return '<li>' + esc(s) + '</li>'; }).join('') + '</ul></div>' : '';
     var altCta = A.alt !== ideal ? '<button class="ghost" data-type="' + A.alt + '">まず' + esc(altShort) + 'から始める（相性' + A.altMatch + '%）→</button>' : '';
@@ -347,7 +347,7 @@
     var top = res.ranked[0];
     var lead = '🎉 あなたに一番合うのは「<b>' + esc(TYPES[top.type].name) + '</b>」（相性 <b>' + top.match + '%</b>）です！';
     var lowConf = (res.ranked[0].match - res.ranked[1].match) <= 8 || unsure >= 4;
-    var note = lowConf ? '<p class="muted small">近いタイプが複数あります。迷ったら、身軽な個人事業から始めて、決まってきたら法人化（法人成り）する道もあります。どれも良いスタートです。</p>' : '';
+    var note = lowConf ? '<p class="muted small">大丈夫です。近いタイプが複数あって迷っても、身軽な個人事業から始めて、決まってきたら法人化（法人成り）する道があります。どれも良いスタートです。</p>' : '';
     var insHtml = insights.length ? '<div class="ins-box"><b>👀 あわせて知っておきたい点</b><ul class="ins">' + insights.map(function (s) { return '<li>' + esc(s) + '</li>'; }).join('') + '</ul></div>' : '';
     return '<section class="card"><h2>診断結果</h2><p class="lead2">' + lead + '</p><p class="muted small">各タイプとの相性です（あなたの回答が、その道に理想的な答えにどれだけ近いか）。</p><div class="fit">' + bars + '</div>' + note + '</section>' +
       resultCard(res.ranked[0]) +
