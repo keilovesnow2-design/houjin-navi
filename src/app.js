@@ -52,6 +52,17 @@
   function countUnsure(answers, questions) {
     var n = 0; (questions || []).forEach(function (q) { var i = answers[q.id]; if (i != null && q.options[i] && q.options[i].unsure) n++; }); return n;
   }
+  // 各タイプに取り得る満点（その道に一番寄せた理想回答の合計）
+  function typeMax(questions, typeKeys) {
+    var max = {}; typeKeys.forEach(function (t) { max[t] = 0; });
+    (questions || []).forEach(function (q) {
+      typeKeys.forEach(function (t) {
+        var best = 0; q.options.forEach(function (o) { var w = (o.weights && o.weights[t]) || 0; if (w > best) best = w; });
+        max[t] += best;
+      });
+    });
+    return max;
+  }
   function scoreDiagnosis(answers, questions, typeKeys) {
     answers = answers || {}; questions = questions || []; typeKeys = typeKeys || [];
     var scores = {}; typeKeys.forEach(function (t) { scores[t] = 0; });
@@ -60,18 +71,33 @@
       Object.keys(opt.weights).forEach(function (t) { if (scores[t] != null) scores[t] += opt.weights[t]; });
     });
     var total = 0; typeKeys.forEach(function (t) { total += scores[t]; });
-    var ranked = typeKeys.map(function (t) { return { type: t, score: scores[t], pct: total > 0 ? Math.round(scores[t] / total * 100) : 0 }; });
-    ranked.sort(function (a, b) { if (b.score !== a.score) return b.score - a.score; return typeKeys.indexOf(a.type) - typeKeys.indexOf(b.type); });
-    return { scores: scores, ranked: ranked, total: total, answered: countAnswered(answers, questions) };
+    var maxes = typeMax(questions, typeKeys);
+    // match = その道への近さ（満点比）。100%到達可能。表示はこちらを使う。
+    var ranked = typeKeys.map(function (t) {
+      return { type: t, score: scores[t], match: maxes[t] > 0 ? Math.round(scores[t] / maxes[t] * 100) : 0, pct: total > 0 ? Math.round(scores[t] / total * 100) : 0 };
+    });
+    ranked.sort(function (a, b) { if (b.match !== a.match) return b.match - a.match; if (b.score !== a.score) return b.score - a.score; return typeKeys.indexOf(a.type) - typeKeys.indexOf(b.type); });
+    return { scores: scores, maxes: maxes, ranked: ranked, total: total, answered: countAnswered(answers, questions) };
   }
-  // 理想フィット分析：理想の一致度と、現実的な代替案を返す
+  // 理想フィット分析：理想への近さ(match)と、いま一番合うタイプ（希望を持てる代替）を返す
   function analyzeIdeal(answers, questions, typeKeys, ideal) {
     var s = scoreDiagnosis(answers, questions, typeKeys);
-    var entry = s.ranked.filter(function (r) { return r.type === ideal; })[0] || { type: ideal, score: 0, pct: 0 };
-    var idealRank = s.ranked.map(function (r) { return r.type; }).indexOf(ideal);
-    var aligned = s.ranked[0].type === ideal;
-    var alt = aligned ? (s.ranked[1] ? s.ranked[1].type : ideal) : s.ranked[0].type;
-    return { ranked: s.ranked, idealPct: entry.pct, idealScore: entry.score, aligned: aligned, idealRank: idealRank, alt: alt, total: s.total, answered: s.answered };
+    var byType = {}; s.ranked.forEach(function (r) { byType[r.type] = r; });
+    var entry = byType[ideal] || { type: ideal, score: 0, match: 0 };
+    var top = s.ranked[0];
+    var aligned = top.type === ideal;
+    var alt = aligned ? (s.ranked[1] ? s.ranked[1].type : ideal) : top.type;
+    return { ranked: s.ranked, idealMatch: entry.match, idealScore: entry.score, aligned: aligned,
+      alt: alt, altMatch: (byType[alt] || { match: 0 }).match, total: s.total, answered: s.answered };
+  }
+  // 理想に「既に合っている点」（前向きに褒めるため）
+  function idealStrengths(answers, questions, ideal) {
+    var out = [];
+    (questions || []).forEach(function (q) {
+      var idx = answers[q.id]; if (idx == null) return; var o = q.options[idx];
+      if (o && o.weights && o.weights[ideal] > 0) out.push(o.label);
+    });
+    return out;
   }
   function collectDiagnosisInsights(answers, questions) {
     var out = [];
@@ -147,7 +173,8 @@
 
   var HN = {
     addDays: addDays, addMonths: addMonths, computeDeadlines: computeDeadlines, validateCompany: validateCompany, computeProgress: computeProgress,
-    scoreDiagnosis: scoreDiagnosis, analyzeIdeal: analyzeIdeal, collectDiagnosisInsights: collectDiagnosisInsights,
+    scoreDiagnosis: scoreDiagnosis, analyzeIdeal: analyzeIdeal, typeMax: typeMax, idealStrengths: idealStrengths,
+    collectDiagnosisInsights: collectDiagnosisInsights,
     countAnswered: countAnswered, countUnsure: countUnsure, buildICS: buildICS, requiredOf: requiredOf,
     generateTeikan: generateTeikan, generateShodakusho: generateShodakusho, generateHaraikomi: generateHaraikomi,
     generateShinseisho: generateShinseisho, generateTokijiko: generateTokijiko, generateKaigyoGuide: generateKaigyoGuide, generateAoiroGuide: generateAoiroGuide
@@ -248,25 +275,38 @@
   }
   function resultDynamic() { return state.diagMode === 'ideal' ? resultIdeal() : resultExplore(); }
 
+  function tier(match) {
+    if (match >= 80) return { emoji: '🎉', msg: 'この理想にとても近いです！自信を持って進んで大丈夫。' };
+    if (match >= 60) return { emoji: '👍', msg: 'いい線いっています！あと少しで理想に届きます。' };
+    if (match >= 40) return { emoji: '🌱', msg: '今は準備段階。ここを押さえれば着実に近づけます。' };
+    return { emoji: '🌱', msg: '今はスタート地点。あなたの理想は、これから十分に目指せます。' };
+  }
   function resultIdeal() {
     var ideal = state.idealType, t = TYPES[ideal];
     var A = HN.analyzeIdeal(state.diag, Q.questions, TK, ideal);
+    var tr = tier(A.idealMatch);
+    var strengths = HN.idealStrengths(state.diag, Q.questions, ideal);
     var reqs = (DATA.IDEAL_REQUIREMENTS[ideal] || []).map(function (r) { return '<li>' + esc(r.text) + ' ' + srcLink(r.source) + '</li>'; }).join('');
     var insights = HN.collectDiagnosisInsights(state.diag, Q.questions);
     var unsure = HN.countUnsure(state.diag, Q.questions);
-    var altName = TYPES[A.alt].name, altShort = TYPES[A.alt].short;
+    var altShort = TYPES[A.alt].short;
+    var strengthsHtml = strengths.length
+      ? '<section class="card good"><h3>✅ あなたが既に「' + esc(t.short) + '向き」な点</h3><ul class="reqs">' + strengths.map(function (s) { return '<li>' + esc(s) + '</li>'; }).join('') + '</ul><p class="muted small">この強みを活かせば理想に近づけます。</p></section>'
+      : '';
     var msg = A.aligned
-      ? '✅ あなたの回答も理想と同じ方向を向いています。上の「必要な覚悟」を確認して進みましょう。'
-      : '💬 いまの回答からは「<b>' + esc(altName) + '</b>」の方が現実的そうです。理想の「' + esc(t.name) + '」を目指すなら、上の必要な覚悟を踏まえて。迷うなら <b>まず' + esc(altShort) + 'から始めて将来' + esc(t.short) + 'にする（法人成り）</b>のも堅実です。';
-    var unsureNote = unsure >= 4 ? '<p class="muted small">「わからない」が多め（' + unsure + '問）です。まだ迷う段階なら、身軽に始められる個人事業からのスタートも一手です。</p>' : '';
+      ? '🎉 あなたの回答は理想とバッチリ同じ方向です。下の「準備すること」を整えれば、そのまま' + esc(t.short) + 'を目指せます。'
+      : 'あなたの理想「' + esc(t.name) + '」はすてきな目標です。いまのあなたには「<b>' + esc(TYPES[A.alt].name) + '</b>」もよく合っています（相性 <b>' + A.altMatch + '%</b>）。理想に届くかは<b>順番とタイミングの問題</b>。<b>まず' + esc(altShort) + 'から始めて、将来' + esc(t.short) + 'へ（法人成り）</b>という道も王道です。<b>理想は変えなくて大丈夫。</b>';
+    var unsureNote = unsure >= 4 ? '<p class="muted small">「わからない」が多め（' + unsure + '問）です。焦らず、まずは身軽な個人事業から始めるのも良い一手です。</p>' : '';
     var insHtml = insights.length ? '<div class="ins-box"><b>👀 あわせて知っておきたい点</b><ul class="ins">' + insights.map(function (s) { return '<li>' + esc(s) + '</li>'; }).join('') + '</ul></div>' : '';
-    var altCta = A.alt !== ideal ? '<button class="ghost" data-type="' + A.alt + '">まず' + esc(altShort) + 'から始める →</button>' : '';
+    var altCta = A.alt !== ideal ? '<button class="ghost" data-type="' + A.alt + '">まず' + esc(altShort) + 'から始める（相性' + A.altMatch + '%）→</button>' : '';
     return '<section class="card ideal-hero"><h2>🎯 あなたの理想：' + esc(t.name) + '</h2>' +
-      '<div class="fitrow big"><span class="fitname">理想フィット度</span><div class="fitbar"><span style="width:' + A.idealPct + '%"></span></div><b>' + A.idealPct + '%</b></div>' +
-      '<p class="muted small">※ 回答とこの理想の一致度の目安です。</p></section>' +
-      '<section class="card"><h3>🧭 この理想に必要なこと・覚悟</h3><ul class="reqs">' + reqs + '</ul>' + srcLink(t.source) + '</section>' +
-      '<section class="card"><h3>💬 いまの回答から</h3><p>' + msg + '</p>' + unsureNote + insHtml +
-      '<div class="cta"><button class="primary" data-type="' + ideal + '">' + esc(t.short) + 'の手続きに進む →</button> ' + altCta + '</div></section>';
+      '<div class="fitrow big"><span class="fitname">' + esc(t.short) + 'との相性</span><div class="fitbar"><span style="width:' + A.idealMatch + '%"></span></div><b>' + A.idealMatch + '%</b></div>' +
+      '<p class="tiermsg">' + tr.emoji + ' ' + esc(tr.msg) + '</p></section>' +
+      strengthsHtml +
+      '<section class="card"><h3>🧭 近づくために準備しておくと安心なこと</h3><ul class="reqs">' + reqs + '</ul>' + srcLink(t.source) + '</section>' +
+      '<section class="card"><h3>💬 あなたへのおすすめ</h3><p>' + msg + '</p>' + unsureNote + insHtml +
+      '<div class="cta"><button class="primary" data-type="' + ideal + '">' + esc(t.short) + 'の手続きに進む →</button> ' + altCta + '</div>' +
+      '<p class="muted small hope">🌱 どの形もゴールではなくスタート。あなたのペースで大丈夫です。</p></section>';
   }
 
   function resultExplore() {
@@ -274,19 +314,22 @@
     var insights = HN.collectDiagnosisInsights(state.diag, Q.questions);
     var unsure = HN.countUnsure(state.diag, Q.questions);
     var bars = res.ranked.map(function (r) {
-      return '<div class="fitrow"><span class="fitname">' + esc(TYPES[r.type].name) + '</span><div class="fitbar"><span style="width:' + r.pct + '%"></span></div><b>' + r.pct + '%</b></div>';
+      return '<div class="fitrow"><span class="fitname">' + esc(TYPES[r.type].name) + '</span><div class="fitbar"><span style="width:' + r.match + '%"></span></div><b>' + r.match + '%</b></div>';
     }).join('');
-    var lowConf = (res.ranked[0].score - res.ranked[1].score) <= 2 || unsure >= 4;
-    var note = lowConf ? '<p class="muted small">まだ迷いが大きい段階のようです。身軽な個人事業から始めて、決まってきたら法人化（法人成り）する道もあります。</p>' : '';
-    var insHtml = insights.length ? '<div class="ins-box"><b>👀 見落としがちなポイント</b><ul class="ins">' + insights.map(function (s) { return '<li>' + esc(s) + '</li>'; }).join('') + '</ul></div>' : '';
-    return '<section class="card"><h2>診断結果（どれが合う？）</h2><p class="muted">回答から算出したタイプ別の適合度です（目安）。</p><div class="fit">' + bars + '</div>' + note + '</section>' +
+    var top = res.ranked[0];
+    var lead = '🎉 あなたに一番合うのは「<b>' + esc(TYPES[top.type].name) + '</b>」（相性 <b>' + top.match + '%</b>）です！';
+    var lowConf = (res.ranked[0].match - res.ranked[1].match) <= 8 || unsure >= 4;
+    var note = lowConf ? '<p class="muted small">近いタイプが複数あります。迷ったら、身軽な個人事業から始めて、決まってきたら法人化（法人成り）する道もあります。どれも良いスタートです。</p>' : '';
+    var insHtml = insights.length ? '<div class="ins-box"><b>👀 あわせて知っておきたい点</b><ul class="ins">' + insights.map(function (s) { return '<li>' + esc(s) + '</li>'; }).join('') + '</ul></div>' : '';
+    return '<section class="card"><h2>診断結果</h2><p class="lead2">' + lead + '</p><p class="muted small">各タイプとの相性です（あなたの回答が、その道に理想的な答えにどれだけ近いか）。</p><div class="fit">' + bars + '</div>' + note + '</section>' +
       resultCard(res.ranked[0]) +
-      '<section class="card alt"><h3>💡 あなたなら、こういう選択肢も</h3>' + resultCardInner(res.ranked[1]) + '</section>' +
-      (insHtml ? '<section class="card">' + insHtml + '</section>' : '');
+      '<section class="card alt"><h3>💡 あなたなら、こういう選択肢も（相性 ' + res.ranked[1].match + '%）</h3>' + resultCardInner(res.ranked[1]) + '</section>' +
+      (insHtml ? '<section class="card">' + insHtml + '</section>' : '') +
+      '<p class="muted small hope">🌱 どの形もゴールではなくスタート。あなたのペースで大丈夫です。</p>';
   }
   function resultCard(r) {
     var t = TYPES[r.type];
-    return '<section class="card primary-card"><div class="pc-h"><span class="crown">👑</span><div><span class="pc-label">あなたに合いそうなのは</span><h3>' + esc(t.name) + '</h3></div><span class="pc-pct">' + r.pct + '%</span></div>' + resultCardInner(r) + '</section>';
+    return '<section class="card primary-card"><div class="pc-h"><span class="crown">👑</span><div><span class="pc-label">あなたに一番合うのは</span><h3>' + esc(t.name) + '</h3></div><span class="pc-pct">' + r.match + '%</span></div>' + resultCardInner(r) + '</section>';
   }
   function resultCardInner(r) {
     var t = TYPES[r.type];

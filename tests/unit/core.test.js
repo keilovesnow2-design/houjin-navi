@@ -125,22 +125,34 @@ test('countUnsure: わからない選択数を数える', () => {
   assert.strictEqual(HN.countUnsure(ans, Q), 2);
 });
 
-// ---- 理想フィット分析 ----
-test('analyzeIdeal: 理想=合同 & 回答が合同寄り→aligned', () => {
-  // q10 合同で十分(2), q1 専業(1), q7 リスクあり(1) など合同寄り
-  const ans = { q1: 1, q2: 1, q3: 2, q4: 1, q5: 1, q6: 1, q7: 1, q8: 1, q9: 1, q10: 1 };
-  const A = HN.analyzeIdeal(ans, Q, TYPES, 'llc');
-  assert.ok(A.idealPct > 0);
-  assert.ok(typeof A.aligned === 'boolean');
-  assert.ok(TYPES.includes(A.alt));
+// ---- 満点・相性（100点到達可能） ----
+test('typeMax: 各タイプの満点（合同=17・個人=23）', () => {
+  const mx = HN.typeMax(Q, TYPES);
+  assert.strictEqual(mx.llc, 17);
+  assert.strictEqual(mx.kojin, 23);
 });
-test('analyzeIdeal: 理想=株式 だが超堅実回答→alignedでなく代替案が出る', () => {
+test('相性は100%に到達できる（合同一直線の回答）', () => {
+  const ans = { q1: 1, q2: 0, q3: 0, q4: 1, q5: 1, q6: 0, q7: 1, q8: 0, q9: 1, q10: 1 }; // 各問の合同最大
+  const A = HN.analyzeIdeal(ans, Q, TYPES, 'llc');
+  assert.strictEqual(A.idealMatch, 100); // 100点が出る
+  assert.strictEqual(A.aligned, true);
+});
+test('idealStrengths: 理想に合っている回答を集める', () => {
+  const ans = { q1: 1, q2: 0, q3: 0, q4: 1, q5: 1, q6: 0, q7: 1, q8: 0, q9: 1, q10: 1 };
+  const st = HN.idealStrengths(ans, Q, 'llc');
+  assert.ok(st.length >= 8); // 合同向きの強みが多数
+  assert.ok(st.some(s => s.includes('合同会社')));
+});
+
+// ---- 理想フィット分析 ----
+test('analyzeIdeal: 理想=株式 だが超堅実回答→alignedでなく個人事業を提案（希望を残す）', () => {
   const ideal = 'kk';
-  const ans = { q1: 0, q2: 0, q3: 0, q4: 0, q5: 0, q6: 0, q7: 0, q8: 0, q9: 0, q10: 0 }; // 全て個人事業寄り
+  const ans = { q1: 0, q2: 0, q3: 0, q4: 0, q5: 0, q6: 0, q7: 0, q8: 0, q9: 0, q10: 0 };
   const A = HN.analyzeIdeal(ans, Q, TYPES, ideal);
   assert.strictEqual(A.aligned, false);
-  assert.notStrictEqual(A.alt, ideal); // 代替案は理想と別
-  assert.strictEqual(A.alt, 'kojin');  // 堅実回答なので個人事業を提案
+  assert.strictEqual(A.alt, 'kojin');       // 現実的な代替案
+  assert.ok(A.altMatch >= 80);              // 代替は高相性＝希望が持てる数字
+  assert.ok(typeof A.idealMatch === 'number');
 });
 test('IDEAL_REQUIREMENTS: 全タイプに項目があり、数値項目に出典', () => {
   TYPES.forEach(t => {
