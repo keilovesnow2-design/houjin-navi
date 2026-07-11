@@ -11,11 +11,11 @@
 
 ## 1. 現在の状態（実測 2026-07-12）
 - ブランチ: `main`（`origin/main` と一致・差分なし）
-- 最新コミット: `4269b3f`（機能完成は `75b3a10`、docs追加が `4269b3f`）
+- 最新の機能コミット: `75b3a10`（これ以降は docs/handoff のみ）
 - 単体テスト: `node --test` → 29 pass / 0 fail
 - 本番: https://houjin-navi.kei-love-snow2.workers.dev （HTTP 200）
 - GitHub: https://github.com/keilovesnow2-design/houjin-navi （push で自動デプロイ）
-- チェックポイントtag: `checkpoint-2026-07-12` → `4269b3f` を指す（本セッション完成点）
+- チェックポイントtag: **`checkpoint-2026-07-12`**（`git checkout checkpoint-2026-07-12` で本セッション完成状態を復元可）
 
 ## 2. 完成している機能
 - 理想ドリブン法人診断（10問4セクション／個人事業・合同・株式・一般社団）
