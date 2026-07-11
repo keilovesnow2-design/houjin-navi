@@ -143,6 +143,18 @@ test('idealStrengths: 理想に合っている回答を集める', () => {
   assert.ok(st.length >= 8); // 合同向きの強みが多数
   assert.ok(st.some(s => s.includes('合同会社')));
 });
+test('gapHints: 理想と離れた回答に「こうなると近づく」ヒントを出す', () => {
+  const ans = { q1: 0, q2: 0, q3: 0, q4: 0, q5: 0, q6: 0, q7: 0, q8: 0, q9: 0, q10: 0 }; // 個人事業寄り
+  const hints = HN.gapHints(ans, Q, 'llc', 3);
+  assert.strictEqual(hints.length, 3);          // 上位3件
+  hints.forEach(h => { assert.ok(h.q && h.target); });
+  // 差が大きい順（最初のギャップが最大）
+  assert.ok(hints[0].gap >= hints[1].gap);
+});
+test('gapHints: 完全に理想一致ならヒントは空', () => {
+  const ans = { q1: 1, q2: 0, q3: 0, q4: 1, q5: 1, q6: 0, q7: 1, q8: 0, q9: 1, q10: 1 }; // 合同満点
+  assert.strictEqual(HN.gapHints(ans, Q, 'llc', 3).length, 0);
+});
 
 // ---- 理想フィット分析 ----
 test('analyzeIdeal: 理想=株式 だが超堅実回答→alignedでなく個人事業を提案（希望を残す）', () => {

@@ -99,6 +99,20 @@
     });
     return out;
   }
+  // 「こうなると理想に近づく」ヒント：理想と離れている回答→より近い状態を提示（差の大きい順）
+  function gapHints(answers, questions, ideal, limit) {
+    limit = limit || 3;
+    var hints = [];
+    (questions || []).forEach(function (q) {
+      var idx = answers[q.id];
+      var chosen = (idx != null && q.options[idx].weights) ? (q.options[idx].weights[ideal] || 0) : 0;
+      var best = 0, bestOpt = null;
+      q.options.forEach(function (o) { var w = (o.weights && o.weights[ideal]) || 0; if (w > best) { best = w; bestOpt = o; } });
+      if (bestOpt && best > chosen) hints.push({ q: q.text, target: bestOpt.label, gap: best - chosen });
+    });
+    hints.sort(function (a, b) { return b.gap - a.gap; });
+    return hints.slice(0, limit);
+  }
   function collectDiagnosisInsights(answers, questions) {
     var out = [];
     (questions || []).forEach(function (q) { var idx = answers[q.id]; if (idx == null) return; var opt = q.options[idx]; if (opt && opt.insight) out.push(opt.insight); });
@@ -173,7 +187,7 @@
 
   var HN = {
     addDays: addDays, addMonths: addMonths, computeDeadlines: computeDeadlines, validateCompany: validateCompany, computeProgress: computeProgress,
-    scoreDiagnosis: scoreDiagnosis, analyzeIdeal: analyzeIdeal, typeMax: typeMax, idealStrengths: idealStrengths,
+    scoreDiagnosis: scoreDiagnosis, analyzeIdeal: analyzeIdeal, typeMax: typeMax, idealStrengths: idealStrengths, gapHints: gapHints,
     collectDiagnosisInsights: collectDiagnosisInsights,
     countAnswered: countAnswered, countUnsure: countUnsure, buildICS: buildICS, requiredOf: requiredOf,
     generateTeikan: generateTeikan, generateShodakusho: generateShodakusho, generateHaraikomi: generateHaraikomi,
@@ -281,6 +295,10 @@
     if (match >= 40) return { emoji: '🌱', msg: '今は準備段階。ここを押さえれば着実に近づけます。' };
     return { emoji: '🌱', msg: '今はスタート地点。あなたの理想は、これから十分に目指せます。' };
   }
+  // 結果の最後に必ず入れる安心メッセージ（良くても悪くても）
+  function reassureBlock() {
+    return '<section class="card reassure"><p>🍀 <b>大丈夫です。安心してください。</b>結果が良くても・そうでなくても、あなたの「やってみたい」という気持ちがいちばんの原動力です。ここから一歩ずつ、ちゃんと進めます。</p></section>';
+  }
   function resultIdeal() {
     var ideal = state.idealType, t = TYPES[ideal];
     var A = HN.analyzeIdeal(state.diag, Q.questions, TK, ideal);
@@ -299,14 +317,22 @@
     var unsureNote = unsure >= 4 ? '<p class="muted small">「わからない」が多め（' + unsure + '問）です。焦らず、まずは身軽な個人事業から始めるのも良い一手です。</p>' : '';
     var insHtml = insights.length ? '<div class="ins-box"><b>👀 あわせて知っておきたい点</b><ul class="ins">' + insights.map(function (s) { return '<li>' + esc(s) + '</li>'; }).join('') + '</ul></div>' : '';
     var altCta = A.alt !== ideal ? '<button class="ghost" data-type="' + A.alt + '">まず' + esc(altShort) + 'から始める（相性' + A.altMatch + '%）→</button>' : '';
+    var hints = HN.gapHints(state.diag, Q.questions, ideal, 3);
+    var hintsHtml = (A.idealMatch < 100 && hints.length)
+      ? '<section class="card grow"><h3>🌱 こうなると「' + esc(t.short) + '」にもっと近づきます</h3><ul class="reqs">' +
+        hints.map(function (h) { return '<li>「' + esc(h.q) + '」→ <b>' + esc(h.target) + '</b> の状況になったとき</li>'; }).join('') +
+        '</ul><p class="muted small">今すぐでなくてOK。タイミングが来たら踏み出せます。</p></section>'
+      : '';
     return '<section class="card ideal-hero"><h2>🎯 あなたの理想：' + esc(t.name) + '</h2>' +
       '<div class="fitrow big"><span class="fitname">' + esc(t.short) + 'との相性</span><div class="fitbar"><span style="width:' + A.idealMatch + '%"></span></div><b>' + A.idealMatch + '%</b></div>' +
-      '<p class="tiermsg">' + tr.emoji + ' ' + esc(tr.msg) + '</p></section>' +
+      '<p class="tiermsg">' + tr.emoji + ' ' + esc(tr.msg) + '</p>' +
+      '<p class="canline">💪 相性は「今の状況との近さ」で、「できる・できない」ではありません。<b>やると決めれば実現できます</b>（' + esc(t.short) + 'は ' + esc(t.costText) + '・自分でも手続き可能）。</p></section>' +
       strengthsHtml +
+      hintsHtml +
       '<section class="card"><h3>🧭 近づくために準備しておくと安心なこと</h3><ul class="reqs">' + reqs + '</ul>' + srcLink(t.source) + '</section>' +
       '<section class="card"><h3>💬 あなたへのおすすめ</h3><p>' + msg + '</p>' + unsureNote + insHtml +
-      '<div class="cta"><button class="primary" data-type="' + ideal + '">' + esc(t.short) + 'の手続きに進む →</button> ' + altCta + '</div>' +
-      '<p class="muted small hope">🌱 どの形もゴールではなくスタート。あなたのペースで大丈夫です。</p></section>';
+      '<div class="cta"><button class="primary" data-type="' + ideal + '">' + esc(t.short) + 'の手続きに進む →</button> ' + altCta + '</div></section>' +
+      reassureBlock();
   }
 
   function resultExplore() {
@@ -325,7 +351,8 @@
       resultCard(res.ranked[0]) +
       '<section class="card alt"><h3>💡 あなたなら、こういう選択肢も（相性 ' + res.ranked[1].match + '%）</h3>' + resultCardInner(res.ranked[1]) + '</section>' +
       (insHtml ? '<section class="card">' + insHtml + '</section>' : '') +
-      '<p class="muted small hope">🌱 どの形もゴールではなくスタート。あなたのペースで大丈夫です。</p>';
+      '<p class="muted small canline">💪 相性は「今の状況との近さ」です。どの形も、やると決めれば実現できます。</p>' +
+      reassureBlock();
   }
   function resultCard(r) {
     var t = TYPES[r.type];

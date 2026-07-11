@@ -119,6 +119,12 @@ fieldset.q legend{font-weight:600;padding:0 6px}
 .good h3{color:#15803d}
 .hope{text-align:center;margin-top:10px;font-style:italic}
 .lead2{font-size:16px;font-weight:600}
+.canline{background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:9px 12px;font-size:13px;margin-top:10px;color:#1e40af}
+.grow{background:#f0fdf4;border-color:#bbf7d0}
+.grow h3{color:#15803d}
+.reassure{background:linear-gradient(135deg,#fef9f3,#f0fdf4);border-color:#fde68a;text-align:center}
+.reassure p{font-size:15px;margin:4px 0;line-height:1.9}
+.reassure b{color:#b45309}
 
 /* flow */
 .flow-h h2{border-color:var(--green)}
