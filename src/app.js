@@ -226,6 +226,70 @@
       '　「資格」代表取締役', '　「住所」' + g(c, 'daihyoAddr', '住所'), '　「氏名」' + g(c, 'daihyoName', '氏名'),
       '登記記録に関する事項　設立', '', DRAFT_NOTE].join('\n');
   }
+  // ----- 書類生成（一般社団法人・理事会非設置の通常型） -----
+  function generateTeikanShadan(c) {
+    c = c || {};
+    return [g(c, 'meisho', '名称') + '定款', '', '第1章　総則', '（名称）', '第1条　この法人は、' + g(c, 'meisho', '名称') + 'と称する。',
+      '（事務所）', '第2条　この法人は、主たる事務所を' + g(c, 'jimusho', '主たる事務所') + 'に置く。',
+      '第2章　目的及び事業', '（目的）', '第3条　この法人は、次のことを目的とする。', '　　' + g(c, 'mokuteki', '目的・事業'),
+      '（事業）', '第4条　この法人は、前条の目的に資するため、次の事業を行う。', '　　（1）' + g(c, 'mokuteki', '目的・事業') + 'に関する事業', '　　（2）前号に附帯又は関連する一切の事業', '',
+      '第3章　社員', '（法人の構成員）', '第5条　この法人は、この法人の事業に賛同する個人又は団体であって、所定の手続により社員となった者をもって構成する。',
+      '（経費の負担）', '第6条　社員は、社員総会において別に定める額を支払う義務を負う。',
+      '（任意退社）', '第7条　社員は、別に定める退社届を提出することにより、任意にいつでも退社することができる。', '',
+      '第4章　社員総会', '第8条　社員総会は、すべての社員をもって構成し、この定款に定める事項及び法令に定める事項を決議する。',
+      '第9条　社員総会における議決権は、社員1名につき1個とする。', '',
+      '第5章　役員', '（役員の設置）', '第10条　この法人に理事1名以上を置き、理事が2名以上ある場合はその互選により代表理事1名を定める。',
+      '（役員の選任）', '第11条　理事は、社員総会の決議によって選任する。', '（役員の任期）', '第12条　理事の任期は、選任後2年以内に終了する事業年度のうち最終のものに関する定時社員総会の終結の時までとする。', '',
+      '第6章　計算', '（事業年度）', '第13条　この法人の事業年度は、毎年 ' + g(c, 'fiscalStart', '4月1日') + ' から ' + g(c, 'fiscalEnd', '3月31日') + ' までとする。', '',
+      '第7章　公告の方法', '第14条　この法人の公告は、官報に掲載してする。', '',
+      '第8章　附則', '第15条　この法人の設立時社員の氏名及び住所は、次のとおりである。',
+      '　　設立時社員　' + g(c, 'daihyoName', '設立時社員氏名') + '（住所：' + g(c, 'daihyoAddr', '住所') + '）', '　　設立時社員　' + g(c, 'shain2Name', 'もう一人の設立時社員'),
+      '第16条　この法人の設立時代表理事は、' + g(c, 'daihyoName', '設立時代表理事氏名') + 'とする。',
+      '第17条　この定款に定めのない事項は、すべて一般社団法人及び一般財団法人に関する法律その他の法令の定めるところによる。', '',
+      '　以上、' + g(c, 'meisho', '名称') + 'の設立のため、この定款を作成し、設立時社員が記名押印する。', '', '　　令和__年__月__日',
+      '　　設立時社員　' + g(c, 'daihyoName', '設立時社員氏名') + '　　印', '　　設立時社員　' + g(c, 'shain2Name', 'もう一人の設立時社員') + '　　印', '',
+      '（注）一般社団法人の定款は、公証人の認証を受ける必要があります。', DRAFT_NOTE].join('\n');
+  }
+  function generateKetsugishoShadan(c) {
+    c = c || {};
+    return ['設立時理事の選任及び主たる事務所の所在場所の決定に関する決議書', '',
+      '　令和__年__月__日、' + g(c, 'meisho', '名称') + '創立事務所において、設立時社員全員が出席し、その全員一致の決議により、次のとおり選任及び決定した。', '',
+      '１．設立時理事　　' + g(c, 'daihyoName', '氏名') + '（住所：' + g(c, 'daihyoAddr', '住所') + '）',
+      '１．主たる事務所の所在場所　　' + g(c, 'jimusho', '主たる事務所'), '',
+      '　上記を証するため、設立時社員の全員は次のとおり記名押印する。', '', '　　令和__年__月__日', '',
+      '　　' + g(c, 'meisho', '名称'), '　　設立時社員　' + g(c, 'daihyoName', '氏名') + '　　印', '　　設立時社員　' + g(c, 'shain2Name', 'もう一人の設立時社員') + '　　印', '', DRAFT_NOTE].join('\n');
+  }
+  function generateGosenShadan(c) {
+    c = c || {};
+    return ['設立時代表理事選定書', '',
+      '　令和__年__月__日、' + g(c, 'meisho', '名称') + '創立事務所において、設立時理事全員が出席し、その全員一致の決議により、設立時代表理事を選定した。なお、被選定者は即時その就任を承諾した。', '',
+      '　　設立時代表理事　　' + g(c, 'daihyoName', '氏名') + '（住所：' + g(c, 'daihyoAddr', '住所') + '）', '',
+      '　上記を証するため、設立時理事の全員は次のとおり記名押印する。', '', '　　令和__年__月__日', '',
+      '　　' + g(c, 'meisho', '名称'), '　　設立時理事　' + g(c, 'daihyoName', '氏名') + '　　印', '',
+      '（注）設立時理事が1名の場合は互選書は不要です（その者が代表理事となります）。', DRAFT_NOTE].join('\n');
+  }
+  function generateShodakushoShadan(c) {
+    c = c || {};
+    return ['就任承諾書', '', '　私は、令和__年__月__日、' + g(c, 'meisho', '名称') + 'の設立時理事および設立時代表理事に選任されたので、その就任を承諾します。', '',
+      '　　令和__年__月__日', '', '　　住所：' + g(c, 'daihyoAddr', '住所'), '　　氏名：' + g(c, 'daihyoName', '氏名') + '　　印', '',
+      '（注）理事会を設置しない法人では、設立時理事の就任承諾書に押す印は、市区町村長作成の印鑑証明書と同一の印鑑が必要です。', DRAFT_NOTE].join('\n');
+  }
+  function generateShinseishoShadan(c) {
+    c = c || {};
+    return ['一般社団法人設立登記申請書', '', '１．名　　称　　' + g(c, 'meisho', '名称'), '１．主たる事務所　　' + g(c, 'jimusho', '主たる事務所'), '１．登記の事由　　設立の手続終了', '１．登記すべき事項　　別紙のとおり',
+      '１．登録免許税　　金 60,000 円（一般社団法人の設立は定額6万円）',
+      '１．添付書類　　定款（認証済）／設立時社員の決議書／設立時代表理事の互選に関する書面／設立時理事及び設立時代表理事の就任承諾書／設立時理事の印鑑証明書／委任状（代理申請の場合）', '',
+      '　上記のとおり登記の申請をします。', '　　令和__年__月__日', '',
+      '　　申請人　　' + g(c, 'meisho', '名称'), '　　設立時代表理事　' + g(c, 'daihyoName', '氏名') + '　　印', '', '　　○○法務局　御中', '', DRAFT_NOTE].join('\n');
+  }
+  function generateTokijikoShadan(c) {
+    c = c || {};
+    return ['「登記すべき事項」', '', '名称　' + g(c, 'meisho', '名称'), '主たる事務所　' + g(c, 'jimusho', '主たる事務所'), '法人の公告方法　官報に掲載してする',
+      '目的等', '　目的', '　　' + g(c, 'mokuteki', '目的・事業'),
+      '役員に関する事項', '　「資格」理事', '　「氏名」' + g(c, 'daihyoName', '氏名'),
+      '　「資格」代表理事', '　「住所」' + g(c, 'daihyoAddr', '住所'), '　「氏名」' + g(c, 'daihyoName', '氏名'),
+      '登記記録に関する事項　設立', '', DRAFT_NOTE].join('\n');
+  }
   function generateKaigyoGuide(c) {
     c = c || {};
     return ['「個人事業の開業・廃業等届出書」記入ガイド（下書き）', '', '提出先：納税地を管轄する税務署 ／ 提出期限：開業日から1ヶ月以内 ／ 手数料：無料', '',
@@ -259,7 +323,9 @@
     generateTeikan: generateTeikan, generateShodakusho: generateShodakusho, generateHaraikomi: generateHaraikomi,
     generateShinseisho: generateShinseisho, generateTokijiko: generateTokijiko, generateKaigyoGuide: generateKaigyoGuide, generateAoiroGuide: generateAoiroGuide,
     generateTeikanKK: generateTeikanKK, generateHokkininKK: generateHokkininKK, generateShodakushoKK: generateShodakushoKK,
-    generateChosaKK: generateChosaKK, generateHaraikomiKK: generateHaraikomiKK, generateShinseishoKK: generateShinseishoKK, generateTokijikoKK: generateTokijikoKK
+    generateChosaKK: generateChosaKK, generateHaraikomiKK: generateHaraikomiKK, generateShinseishoKK: generateShinseishoKK, generateTokijikoKK: generateTokijikoKK,
+    generateTeikanShadan: generateTeikanShadan, generateKetsugishoShadan: generateKetsugishoShadan, generateGosenShadan: generateGosenShadan,
+    generateShodakushoShadan: generateShodakushoShadan, generateShinseishoShadan: generateShinseishoShadan, generateTokijikoShadan: generateTokijikoShadan
   };
   global.HN = HN;
   if (typeof module !== 'undefined' && module.exports) module.exports = HN;

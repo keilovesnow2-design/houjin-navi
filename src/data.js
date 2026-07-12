@@ -15,6 +15,8 @@
       url: 'https://www.moj.go.jp/MINJI/minji06_00134.html' },
     KOSHONIN_FEE: { label: '日本公証人連合会：定款認証の費用（Q3）',
       url: 'https://www.koshonin.gr.jp/notary/ow09_4/9_4_q03' },
+    KOSHONIN_SHADAN: { label: '日本公証人連合会：一般社団法人の定款認証（Q14）',
+      url: 'https://www.koshonin.gr.jp/notary/ow09_4/9_4_q82' },
     NTA_TOROKU: { label: '国税庁：登録免許税の税額表（No.7191）',
       url: 'https://www.nta.go.jp/taxes/shiraberu/taxanswer/inshi/7191.htm' },
     NTA: { label: '国税庁：法人設立届出書・青色申告の承認申請',
@@ -40,7 +42,7 @@
     tagline: '理想の形から、開業・設立まで導く',
     version: '2.1',
     lastVerified: '2026-07-13',
-    scopeNote: '手続きナビは現在「個人事業・合同会社・株式会社」に対応。一般社団法人は診断と概要のみ（詳細ガイドは順次対応）。株式会社は発起設立・一人株式会社を基本形とし、現物出資・募集設立・取締役会設置などの特殊ケースは対象外です。',
+    scopeNote: '手続きナビは「個人事業・合同会社・株式会社・一般社団法人」に対応。株式会社は発起設立・一人株式会社、一般社団法人は理事会非設置の通常型を基本形とし、現物出資・募集設立・取締役会設置・公益／非営利型認定・許認可業種などの特殊ケースは対象外です。',
     disclaimer: '本ツールは情報提供を目的とした支援ツールであり、法的助言・税務助言・登記代理ではありません。診断結果は「向いている傾向」の目安です。制度・税率・様式は改正されることがあります。実際の判断・提出前に必ず公式情報および税理士・司法書士等の専門家でご確認ください。'
   };
 
@@ -153,9 +155,9 @@
         pros: ['社会的信用が高い', '株式発行で資金調達しやすい', '上場を目指せる'],
         cons: ['設立費用が高い', '定款の公証人認証が必要', '決算公告の義務がある'],
         source: SOURCES.MOJ_KK },
-      shadan: { key: 'shadan', name: '一般社団法人', short: '一般社団', flow: 'shadan', buildStatus: 'overview',
+      shadan: { key: 'shadan', name: '一般社団法人', short: '一般社団', flow: 'shadan', buildStatus: 'full',
         tagline: '非営利・公益的な活動を法人でやりたい人に。',
-        costText: '法定費用 約11万円〜',
+        costText: '法定費用 約11万円（認証5万＋登録免許税6万・印紙不要）',
         pros: ['非営利活動の受け皿として信用が得やすい', '事業内容の制限が比較的ゆるい', '設立時社員2名以上で設立可'],
         cons: ['利益を構成員へ分配できない', '定款の公証人認証が必要', '設立に社員2名以上が必要'],
         source: SOURCES.MOJ_HOUMUKYOKU }
@@ -320,15 +322,63 @@
       ]
     },
 
-    // ---- 一般社団法人（概要のみ・順次対応） ----
+    // ---- 一般社団法人（フル対応・非営利型でない通常の一般社団を基本形に） ----
     shadan: {
-      overview: {
-        summary: '一般社団法人は非営利・公益的な活動の受け皿。設立には社員2名以上が必要で、定款の公証人認証が必要です。',
-        steps: ['社員2名以上を確保', '定款の作成 →【公証役場で認証】', '設立時理事などの選任',
-          '法務局へ設立登記（登録免許税6万円）', '設立後の届出（税務署・年金・自治体 など）'],
-        note: '一般社団法人の詳細な手続きガイド・書類自動生成は順次対応予定です。現時点では概要と公式情報リンクのみ提供します。'
-      },
-      source: SOURCES.MOJ_HOUMUKYOKU
+      dateField: 'foundedDate', dateLabel: '設立予定日（登記申請日）',
+      inputFields: [
+        ['meisho', '名称', '例）一般社団法人テスト会（「一般社団法人」を含めます）', 'text', true],
+        ['mokuteki', '目的・主な事業', '例）○○の普及・調査研究・広報活動', 'text', true],
+        ['jimusho', '主たる事務所', '例）東京都渋谷区（定款は最小行政区画まで／申請書は番地まで）', 'text', true],
+        ['daihyoName', '設立時代表理事 氏名（設立時社員を兼ねる）', '例）山田太郎', 'text', true],
+        ['daihyoAddr', '設立時代表理事 住所', '例）東京都渋谷区○○1-2-3', 'text', true],
+        ['shain2Name', 'もう一人の設立時社員 氏名（社員は2名以上必要）', '例）鈴木花子', 'text', true],
+        ['fiscalEnd', '事業年度の末日', '例）3月31日', 'text', true],
+        ['foundedDate', '設立予定日（登記申請日）', '', 'date', true]
+      ],
+      steps: [
+        { id: 'sh1', phase: '設立', title: '1. 基本事項を決める',
+          desc: '名称・目的・主たる事務所・機関設計・事業年度・設立時社員（2名以上必要）を決めます。名称には「一般社団法人」を含めます。', source: SOURCES.MOJ_HOUMUKYOKU },
+        { id: 'sh2', phase: '設立', title: '2. 法人の実印を作る',
+          desc: '法人の代表者印（実印）を作成します。実費の目安は1万〜1.5万円。', source: SOURCES.MOJ_HOUMUKYOKU },
+        { id: 'sh3', phase: '設立', title: '3. 定款を作成し、公証役場で認証を受ける',
+          desc: '設立時社員が定款を作成し、公証人の認証を受けます（必須）。認証手数料は5万円（資本金の概念がないため一律）。一般社団法人の定款には収入印紙4万円は不要（非課税）。', source: SOURCES.KOSHONIN_SHADAN },
+        { id: 'sh4', phase: '設立', title: '4. 設立時理事の選任・代表理事の互選・設立手続の調査',
+          desc: '設立時社員の決議で設立時理事を選任し、設立時理事の互選で代表理事を選定。設立時理事が設立手続の適法性を調査します。', source: SOURCES.MOJ_HOUMUKYOKU },
+        { id: 'sh5', phase: '設立', title: '5. 登記書類を作成・製本する',
+          desc: '認証済み定款・設立時社員の決議書・設立時代表理事の互選書・就任承諾書・設立時理事の印鑑証明書 等を揃えます。', source: SOURCES.MOJ_HOUMUKYOKU },
+        { id: 'sh6', phase: '設立', title: '6. 法務局へ設立登記を申請する',
+          desc: '書面（持参・郵送）またはオンラインで申請。登録免許税は6万円（定額）。申請日が原則「設立日」。', source: SOURCES.MOJ_HOUMUKYOKU },
+        { id: 'sh7', phase: '設立後', title: '7. 設立後の届出をする',
+          desc: '税務署・都道府県・年金事務所などへ期限内に届け出ます。「届出・期限」タブで確認してください。', source: SOURCES.NTA }
+      ],
+      filings: [
+        { id: 'shf_pension', office: '年金事務所', name: '健康保険・厚生年金保険 新規適用届',
+          offsetDays: 5, required: '原則必須', source: SOURCES.NENKIN, note: '社会保険は法人に加入義務（役員報酬・従業員がいる場合）。設立から5日以内。' },
+        { id: 'shf_tax_setsuritsu', office: '税務署', name: '法人設立届出書',
+          offsetMonths: 2, required: '必須', source: SOURCES.NTA, note: '設立日から2ヶ月以内。' },
+        { id: 'shf_tax_aoiro', office: '税務署', name: '青色申告の承認申請書',
+          offsetMonths: 3, required: '収益事業を行う場合', source: SOURCES.NTA, note: '収益事業を行う場合。設立から3ヶ月 または 事業年度末の早い方の前日まで。' },
+        { id: 'shf_tax_kyuyo', office: '税務署', name: '給与支払事務所等の開設届出書',
+          offsetMonths: 1, required: '給与を支払う場合は必須', source: SOURCES.NTA, note: '給与支払事務所の開設から1ヶ月以内。役員報酬を出す場合も対象。' },
+        { id: 'shf_pref', office: '都道府県税事務所', name: '法人設立届出書（都道府県）',
+          depends: 'municipal', required: '必須', source: SOURCES.TOKYO_TAX,
+          note: '期限は自治体により異なる（例：東京都は事業開始日から15日以内）。非営利型で収益事業がない場合の均等割の扱いも含め、お住まいの自治体で要確認。' },
+        { id: 'shf_city', office: '市区町村役場', name: '法人設立届出書（市区町村）',
+          depends: 'municipal', required: '必須（東京23区は不要）', source: SOURCES.TOKYO_TAX,
+          note: '東京23区は区役所への提出不要（都税事務所に一本化）。その他は自治体で要確認。' },
+        { id: 'shf_rousai', office: '労働基準監督署', name: '労働保険 保険関係成立届',
+          depends: 'employee', required: '従業員を雇う場合', source: SOURCES.EGOV, note: '従業員を雇用した日の翌日から10日以内。' },
+        { id: 'shf_hello', office: 'ハローワーク', name: '雇用保険 適用事業所設置届',
+          depends: 'employee', required: '従業員を雇う場合', source: SOURCES.EGOV, note: '設置日の翌日から10日以内。' }
+      ],
+      documents: [
+        { id: 'teikan_shadan', title: '定款（ドラフト）', fn: 'generateTeikanShadan' },
+        { id: 'ketsugisho_shadan', title: '設立時社員の決議書（ドラフト）', fn: 'generateKetsugishoShadan' },
+        { id: 'gosen_shadan', title: '設立時代表理事 選定書（ドラフト）', fn: 'generateGosenShadan' },
+        { id: 'shodakusho_shadan', title: '就任承諾書（設立時理事・代表理事／ドラフト）', fn: 'generateShodakushoShadan' },
+        { id: 'shinseisho_shadan', title: '一般社団法人設立登記申請書（ドラフト）', fn: 'generateShinseishoShadan' },
+        { id: 'tokijiko_shadan', title: '登記すべき事項（テキスト）', fn: 'generateTokijikoShadan' }
+      ]
     }
   };
 
@@ -358,8 +408,9 @@
       { text: '決算公告など、会社としての運営義務を負う', source: null }
     ],
     shadan: [
+      { text: '設立費用 約11万円（認証5万＋登録免許税6万・定款印紙は不要）', source: SOURCES.KOSHONIN_SHADAN },
       { text: '設立時に社員が2名以上必要', source: SOURCES.MOJ_HOUMUKYOKU },
-      { text: '定款は公証人の認証が必要', source: SOURCES.MOJ_HOUMUKYOKU },
+      { text: '定款は公証人の認証が必要（手数料5万円）', source: SOURCES.KOSHONIN_SHADAN },
       { text: '利益を構成員へ分配できない（非営利）点を理解しておく', source: null },
       { text: '社会保険への加入が必要', source: SOURCES.NENKIN_TEKIYO }
     ]

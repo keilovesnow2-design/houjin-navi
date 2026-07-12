@@ -18,6 +18,11 @@ const KK = {
   shihonkin: '1000000', hakkoStock: '100', daihyoName: '山田太郎', daihyoAddr: '東京都渋谷区1-2-3',
   fiscalStart: '4月1日', fiscalEnd: '3月31日', foundedDate: '2026-08-01'
 };
+const SHADAN = {
+  meisho: '一般社団法人テスト会', mokuteki: '○○の普及・調査研究', jimusho: '東京都渋谷区',
+  daihyoName: '山田太郎', daihyoAddr: '東京都渋谷区1-2-3', shain2Name: '鈴木花子',
+  fiscalStart: '4月1日', fiscalEnd: '3月31日', foundedDate: '2026-08-01'
+};
 
 // ---- 日付ユーティリティ ----
 test('addDays 基本/月跨ぎ', () => {
@@ -48,12 +53,12 @@ test('computeDeadlines(個人): 開業届1ヶ月・青色2ヶ月(目安)', () =>
 
 // ---- 出典必須（正確性） ----
 test('全フローの届出に出典URLがある', () => {
-  ['kojin', 'llc', 'kk'].forEach(fk => DATA.FLOWS[fk].filings.forEach(f => {
+  ['kojin', 'llc', 'kk', 'shadan'].forEach(fk => DATA.FLOWS[fk].filings.forEach(f => {
     assert.ok(f.source && /^https?:\/\//.test(f.source.url), '出典欠落: ' + fk + '/' + f.id);
   }));
 });
 test('全ステップ・全診断タイプに出典がある', () => {
-  ['kojin', 'llc', 'kk'].forEach(fk => DATA.FLOWS[fk].steps.forEach(s => assert.ok(s.source && s.source.url, '出典欠落step: ' + s.id)));
+  ['kojin', 'llc', 'kk', 'shadan'].forEach(fk => DATA.FLOWS[fk].steps.forEach(s => assert.ok(s.source && s.source.url, '出典欠落step: ' + s.id)));
   TYPES.forEach(t => assert.ok(DATA.DIAGNOSIS.types[t].source && DATA.DIAGNOSIS.types[t].source.url, '出典欠落type: ' + t));
 });
 test('数値ヒントのある質問に出典がある', () => {
@@ -243,6 +248,47 @@ test('generateChosaKK/HokkininKK/HaraikomiKK/ShodakushoKK(株式): 要点＋ド�
   assert.ok(HN.generateHaraikomiKK(KK).includes('設立時発行株式数'));
   assert.ok(HN.generateShodakushoKK(KK).includes('就任を承諾'));
   [HN.generateChosaKK, HN.generateHokkininKK, HN.generateHaraikomiKK, HN.generateShodakushoKK].forEach(fn => assert.ok(fn(KK).includes('ドラフト')));
+});
+
+// ---- 一般社団法人 届出期限・検証・書類 ----
+test('computeDeadlines(一般社団): 年金5日・法人設立届2ヶ月', () => {
+  const dls = HN.computeDeadlines('2026-08-01', DATA.FLOWS.shadan.filings);
+  assert.strictEqual(dls.find(d => d.id === 'shf_pension').dueISO, '2026-08-06');
+  assert.strictEqual(dls.find(d => d.id === 'shf_tax_setsuritsu').dueISO, '2026-10-01');
+  assert.strictEqual(dls[0].id, 'shf_pension'); // 締切最短が先頭
+  assert.strictEqual(dls.find(d => d.id === 'shf_pref').dueISO, null); // 自治体依存
+});
+test('validateCompany(一般社団): 社員2人目を含む必須／欠落検出', () => {
+  const req = HN.requiredOf(DATA.FLOWS.shadan.inputFields);
+  assert.strictEqual(HN.validateCompany(SHADAN, req).ok, true);
+  const r = HN.validateCompany({ meisho: 'X' }, req);
+  assert.strictEqual(r.ok, false);
+  assert.ok(r.missing.includes('もう一人の設立時社員 氏名（社員は2名以上必要）'));
+});
+test('一般社団法人はフル対応（buildStatus=full／overviewなし）', () => {
+  assert.strictEqual(DATA.DIAGNOSIS.types.shadan.buildStatus, 'full');
+  assert.ok(!DATA.FLOWS.shadan.overview, 'shadanにoverviewが残存');
+  assert.ok(DATA.FLOWS.shadan.documents.length >= 5);
+});
+test('generateTeikanShadan(一般社団): 公証人認証・社員2名・入力反映', () => {
+  const t = HN.generateTeikanShadan(SHADAN);
+  ['一般社団法人テスト会', '○○の普及・調査研究', '公証人の認証', '鈴木花子', '設立時社員', 'ドラフト'].forEach(k => assert.ok(t.includes(k), '欠落: ' + k));
+});
+test('generateShinseishoShadan(一般社団): 登録免許税6万円の定額表記', () => {
+  const t = HN.generateShinseishoShadan(SHADAN);
+  assert.ok(t.includes('60,000'));
+  assert.ok(t.includes('定額6万円'));
+  assert.ok(t.includes('設立時社員の決議書'));
+});
+test('generateTokijikoShadan(一般社団): 名称・目的・理事・代表理事を網羅', () => {
+  const t = HN.generateTokijikoShadan(SHADAN);
+  ['名称', '主たる事務所', '目的等', '理事', '代表理事', '公告方法'].forEach(k => assert.ok(t.includes(k), '欠落: ' + k));
+});
+test('generateKetsugishoShadan/GosenShadan/ShodakushoShadan(一般社団): 要点＋ドラフト注記', () => {
+  assert.ok(HN.generateKetsugishoShadan(SHADAN).includes('設立時理事'));
+  assert.ok(HN.generateGosenShadan(SHADAN).includes('設立時代表理事'));
+  assert.ok(HN.generateShodakushoShadan(SHADAN).includes('就任を承諾'));
+  [HN.generateKetsugishoShadan, HN.generateGosenShadan, HN.generateShodakushoShadan].forEach(fn => assert.ok(fn(SHADAN).includes('ドラフト')));
 });
 
 // ---- ICS ----
