@@ -13,6 +13,11 @@ const LLC = {
   fiscalStart: '4月1日', fiscalEnd: '3月31日', foundedDate: '2026-08-01'
 };
 const KOJIN = { jigyo: 'Web制作', name: '山田太郎', address: '東京都渋谷区1-2-3', kaigyoDate: '2026-08-01' };
+const KK = {
+  shomei: 'テスト株式会社', mokuteki: 'ソフトウェアの開発', honten: '東京都渋谷区',
+  shihonkin: '1000000', hakkoStock: '100', daihyoName: '山田太郎', daihyoAddr: '東京都渋谷区1-2-3',
+  fiscalStart: '4月1日', fiscalEnd: '3月31日', foundedDate: '2026-08-01'
+};
 
 // ---- 日付ユーティリティ ----
 test('addDays 基本/月跨ぎ', () => {
@@ -43,12 +48,12 @@ test('computeDeadlines(個人): 開業届1ヶ月・青色2ヶ月(目安)', () =>
 
 // ---- 出典必須（正確性） ----
 test('全フローの届出に出典URLがある', () => {
-  ['kojin', 'llc'].forEach(fk => DATA.FLOWS[fk].filings.forEach(f => {
+  ['kojin', 'llc', 'kk'].forEach(fk => DATA.FLOWS[fk].filings.forEach(f => {
     assert.ok(f.source && /^https?:\/\//.test(f.source.url), '出典欠落: ' + fk + '/' + f.id);
   }));
 });
 test('全ステップ・全診断タイプに出典がある', () => {
-  ['kojin', 'llc'].forEach(fk => DATA.FLOWS[fk].steps.forEach(s => assert.ok(s.source && s.source.url, '出典欠落step: ' + s.id)));
+  ['kojin', 'llc', 'kk'].forEach(fk => DATA.FLOWS[fk].steps.forEach(s => assert.ok(s.source && s.source.url, '出典欠落step: ' + s.id)));
   TYPES.forEach(t => assert.ok(DATA.DIAGNOSIS.types[t].source && DATA.DIAGNOSIS.types[t].source.url, '出典欠落type: ' + t));
 });
 test('数値ヒントのある質問に出典がある', () => {
@@ -195,6 +200,49 @@ test('generateKaigyoGuide(個人): 開業届の要点＋入力反映', () => {
 });
 test('generateAoiroGuide(個人): 期限の記載', () => {
   assert.ok(HN.generateAoiroGuide(KOJIN).includes('3月15日'));
+});
+
+// ---- 株式会社 届出期限・検証・書類 ----
+test('computeDeadlines(株式): 年金5日・法人設立届2ヶ月', () => {
+  const dls = HN.computeDeadlines('2026-08-01', DATA.FLOWS.kk.filings);
+  assert.strictEqual(dls.find(d => d.id === 'kkf_pension').dueISO, '2026-08-06');
+  assert.strictEqual(dls.find(d => d.id === 'kkf_tax_setsuritsu').dueISO, '2026-10-01');
+  assert.strictEqual(dls[0].id, 'kkf_pension'); // 締切最短が先頭
+  assert.strictEqual(dls.find(d => d.id === 'kkf_pref').dueISO, null); // 自治体依存
+});
+test('validateCompany(株式): 発行株式数を含む必須／欠落検出', () => {
+  const req = HN.requiredOf(DATA.FLOWS.kk.inputFields);
+  assert.strictEqual(HN.validateCompany(KK, req).ok, true);
+  const r = HN.validateCompany({ shomei: 'X' }, req);
+  assert.strictEqual(r.ok, false);
+  assert.ok(r.missing.includes('設立時発行株式数'));
+});
+test('株式会社はフル対応（buildStatus=full／overviewなし）', () => {
+  assert.strictEqual(DATA.DIAGNOSIS.types.kk.buildStatus, 'full');
+  assert.ok(!DATA.FLOWS.kk.overview, 'kkにoverviewが残存');
+  assert.ok(DATA.FLOWS.kk.documents.length >= 5);
+});
+test('generateTeikanKK(株式): 公証人認証・株式・入力反映', () => {
+  const t = HN.generateTeikanKK(KK);
+  ['テスト株式会社', 'ソフトウェアの開発', '公証人の認証', '発行可能株式総数', '譲渡', 'ドラフト'].forEach(k => assert.ok(t.includes(k), '欠落: ' + k));
+});
+test('generateShinseishoKK(株式): 登録免許税 最低15万円の注記', () => {
+  const t = HN.generateShinseishoKK(KK);
+  assert.ok(t.includes('最低15万円'));
+  assert.ok(t.includes('発起設立'));
+  assert.ok(t.includes('印鑑届書'));
+});
+test('generateTokijikoKK(株式): 株式・資本金・役員を網羅', () => {
+  const t = HN.generateTokijikoKK(KK);
+  ['発行可能株式総数', '発行済株式の総数', '資本金の額', '取締役', '代表取締役', '譲渡'].forEach(k => assert.ok(t.includes(k), '欠落: ' + k));
+});
+test('generateChosaKK/HokkininKK/HaraikomiKK/ShodakushoKK(株式): 要点＋ドラフト注記', () => {
+  assert.ok(HN.generateChosaKK(KK).includes('調査報告書'));
+  assert.ok(HN.generateChosaKK(KK).includes('払込み'));
+  assert.ok(HN.generateHokkininKK(KK).includes('設立時代表取締役'));
+  assert.ok(HN.generateHaraikomiKK(KK).includes('設立時発行株式数'));
+  assert.ok(HN.generateShodakushoKK(KK).includes('就任を承諾'));
+  [HN.generateChosaKK, HN.generateHokkininKK, HN.generateHaraikomiKK, HN.generateShodakushoKK].forEach(fn => assert.ok(fn(KK).includes('ドラフト')));
 });
 
 // ---- ICS ----

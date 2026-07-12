@@ -160,6 +160,72 @@
       '社員に関する事項', '　「資格」代表社員', '　「住所」' + g(c, 'daihyoAddr', '代表社員住所'), '　「氏名」' + g(c, 'daihyoName', '代表社員氏名'),
       '登記記録に関する事項　設立', '', DRAFT_NOTE].join('\n');
   }
+  // ----- 書類生成（株式会社・発起設立） -----
+  function generateTeikanKK(c) {
+    c = c || {};
+    return [g(c, 'shomei', '商号') + '　定款', '', '第1章　総則', '（商号）', '第1条　当会社は、' + g(c, 'shomei', '商号') + 'と称する。',
+      '（目的）', '第2条　当会社は、次の事業を営むことを目的とする。', '　　' + g(c, 'mokuteki', '事業目的'), '　　前各号に附帯関連する一切の事業',
+      '（本店の所在地）', '第3条　当会社は、本店を' + g(c, 'honten', '本店所在地') + 'に置く。', '（公告方法）', '第4条　当会社の公告は、官報に掲載する方法により行う。', '',
+      '第2章　株式', '（発行可能株式総数）', '第5条　当会社の発行可能株式総数は、' + g(c, 'hakkoStock', '発行可能株式総数') + '株とする。',
+      '（株券の不発行）', '第6条　当会社の株式については、株券を発行しない。', '（株式の譲渡制限）', '第7条　当会社の株式を譲渡により取得するには、株主総会の承認を要する。', '',
+      '第3章　株主総会', '第8条　当会社の株主総会は、法令に別段の定めがある場合を除き、取締役が招集する。', '',
+      '第4章　取締役', '第9条　当会社に取締役1名以上を置く。', '第10条　当会社の取締役が2名以上ある場合は、その互選により代表取締役1名を定める。', '',
+      '第5章　計算', '第11条　当会社の事業年度は、毎年 ' + g(c, 'fiscalStart', '4月1日') + ' から ' + g(c, 'fiscalEnd', '3月31日') + ' までとする。', '',
+      '第6章　附則', '（設立に際して出資される財産の価額及び資本金の額）',
+      '第12条　当会社の設立に際して出資される財産の価額は 金 ' + g(c, 'shihonkin', '資本金額') + ' 円とし、その全額を資本金とする。',
+      '第13条　当会社の設立時発行株式の数は ' + g(c, 'hakkoStock', '設立時発行株式数') + '株、設立時発行株式と引換えに払い込む金額は総額 金 ' + g(c, 'shihonkin', '資本金額') + ' 円とする。',
+      '（発起人の氏名等）', '第14条　発起人の氏名、住所及び引き受けた設立時発行株式数は次のとおりである。',
+      '　　住所：' + g(c, 'daihyoAddr', '発起人住所') + '　氏名：' + g(c, 'daihyoName', '発起人氏名') + '　' + g(c, 'hakkoStock', '設立時発行株式数') + '株',
+      '第15条　この定款に定めのない事項は、すべて会社法その他の法令の定めるところによる。', '',
+      '　以上、' + g(c, 'shomei', '商号') + 'を設立するため、発起人が定款を作成し、記名押印する。', '', '　　令和__年__月__日', '　　　　発起人　' + g(c, 'daihyoName', '発起人氏名') + '　　印', '',
+      '（注）株式会社の定款は、公証人の認証を受ける必要があります（会社法30条）。', DRAFT_NOTE].join('\n');
+  }
+  function generateHokkininKK(c) {
+    c = c || {};
+    return ['発起人決定書', '', '　発起人は、' + g(c, 'shomei', '商号') + 'の設立に際し、次のとおり決定した。', '',
+      '１．本店を置く場所　　' + g(c, 'honten', '本店所在地'), '１．設立時発行株式の数　　' + g(c, 'hakkoStock', '設立時発行株式数') + '株',
+      '１．設立に際して出資される財産の価額　　金 ' + g(c, 'shihonkin', '資本金額') + ' 円', '１．資本金の額　　金 ' + g(c, 'shihonkin', '資本金額') + ' 円',
+      '１．設立時取締役　　' + g(c, 'daihyoName', '氏名'), '１．設立時代表取締役　　' + g(c, 'daihyoName', '氏名'), '',
+      '　　令和__年__月__日', '', '　　' + g(c, 'shomei', '商号') + '　発起人', '　　住所：' + g(c, 'daihyoAddr', '発起人住所'), '　　氏名：' + g(c, 'daihyoName', '発起人氏名') + '　　印', '',
+      '（注）本店の具体的な所在場所や設立時役員は、定款に定めがない場合に発起人が決定します。', DRAFT_NOTE].join('\n');
+  }
+  function generateShodakushoKK(c) {
+    c = c || {};
+    return ['就任承諾書', '', '　私は、令和__年__月__日、' + g(c, 'shomei', '商号') + 'の設立時取締役および設立時代表取締役に選任されたので、その就任を承諾します。', '',
+      '　　令和__年__月__日', '', '　　住所：' + g(c, 'daihyoAddr', '住所'), '　　氏名：' + g(c, 'daihyoName', '氏名') + '　　印', '', DRAFT_NOTE].join('\n');
+  }
+  function generateChosaKK(c) {
+    c = c || {};
+    return ['調査報告書', '', '　設立時取締役は、会社法第46条の規定に基づき、' + g(c, 'shomei', '商号') + 'の設立の経過を調査した結果、次のとおり報告する。', '',
+      '１．設立時発行株式について、金銭の払込みが完了していることを確認した。', '　　払込金額の総額　金 ' + g(c, 'shihonkin', '資本金額') + ' 円',
+      '１．設立の手続が法令および定款に違反していないことを確認した。', '１．その他、設立に関し法令・定款に違反する事項は認められなかった。', '',
+      '　　令和__年__月__日', '', '　　' + g(c, 'shomei', '商号'), '　　設立時取締役　' + g(c, 'daihyoName', '氏名') + '　　印', '', DRAFT_NOTE].join('\n');
+  }
+  function generateHaraikomiKK(c) {
+    c = c || {};
+    return ['払込みがあったことを証する書面', '', '　当会社の設立時発行株式については、以下のとおり全額の払込みがあったことを証明します。', '',
+      '　　設立時発行株式数　　' + g(c, 'hakkoStock', '設立時発行株式数') + '株', '　　払込みを受けた金額の総額　金 ' + g(c, 'shihonkin', '資本金額') + ' 円', '',
+      '　　令和__年__月__日', '', '　　' + g(c, 'shomei', '商号'), '　　設立時代表取締役　' + g(c, 'daihyoName', '氏名') + '　　印', '',
+      '（注）発起人個人口座の通帳の表紙・見開き・払込ページのコピーを合綴します。', DRAFT_NOTE].join('\n');
+  }
+  function generateShinseishoKK(c) {
+    c = c || {};
+    return ['株式会社設立登記申請書', '', '１．商　　号　　' + g(c, 'shomei', '商号'), '１．本　　店　　' + g(c, 'honten', '本店所在地'), '１．登記の事由　　発起設立の手続終了', '１．登記すべき事項　　別紙のとおり',
+      '１．課税標準金額　　金 ' + g(c, 'shihonkin', '資本金額') + ' 円', '１．登録免許税　　金 ______ 円（資本金の額×0.7％、最低15万円）',
+      '１．添付書類　　定款（認証済）／発起人の同意書／設立時取締役等の就任承諾書／調査報告書／払込みを証する書面／資本金の額の計上に関する証明書／印鑑証明書／印鑑届書', '',
+      '　上記のとおり登記の申請をします。', '　　令和__年__月__日', '',
+      '　　申請人　　' + g(c, 'shomei', '商号'), '　　設立時代表取締役　' + g(c, 'daihyoName', '氏名') + '　　印', '', '　　○○法務局　御中', '', DRAFT_NOTE].join('\n');
+  }
+  function generateTokijikoKK(c) {
+    c = c || {};
+    return ['「登記すべき事項」', '', '商号　' + g(c, 'shomei', '商号'), '本店　' + g(c, 'honten', '本店所在地'), '公告をする方法　官報に掲載してする',
+      '目的', '　' + g(c, 'mokuteki', '事業目的'), '　前号に附帯関連する一切の事業',
+      '発行可能株式総数　' + g(c, 'hakkoStock', '発行可能株式総数') + '株', '発行済株式の総数　' + g(c, 'hakkoStock', '設立時発行株式数') + '株',
+      '資本金の額　金 ' + g(c, 'shihonkin', '資本金額') + ' 円', '株式の譲渡制限に関する規定　当会社の株式を譲渡により取得するには、株主総会の承認を要する。',
+      '役員に関する事項', '　「資格」取締役', '　「氏名」' + g(c, 'daihyoName', '氏名'),
+      '　「資格」代表取締役', '　「住所」' + g(c, 'daihyoAddr', '住所'), '　「氏名」' + g(c, 'daihyoName', '氏名'),
+      '登記記録に関する事項　設立', '', DRAFT_NOTE].join('\n');
+  }
   function generateKaigyoGuide(c) {
     c = c || {};
     return ['「個人事業の開業・廃業等届出書」記入ガイド（下書き）', '', '提出先：納税地を管轄する税務署 ／ 提出期限：開業日から1ヶ月以内 ／ 手数料：無料', '',
@@ -191,7 +257,9 @@
     collectDiagnosisInsights: collectDiagnosisInsights,
     countAnswered: countAnswered, countUnsure: countUnsure, buildICS: buildICS, requiredOf: requiredOf,
     generateTeikan: generateTeikan, generateShodakusho: generateShodakusho, generateHaraikomi: generateHaraikomi,
-    generateShinseisho: generateShinseisho, generateTokijiko: generateTokijiko, generateKaigyoGuide: generateKaigyoGuide, generateAoiroGuide: generateAoiroGuide
+    generateShinseisho: generateShinseisho, generateTokijiko: generateTokijiko, generateKaigyoGuide: generateKaigyoGuide, generateAoiroGuide: generateAoiroGuide,
+    generateTeikanKK: generateTeikanKK, generateHokkininKK: generateHokkininKK, generateShodakushoKK: generateShodakushoKK,
+    generateChosaKK: generateChosaKK, generateHaraikomiKK: generateHaraikomiKK, generateShinseishoKK: generateShinseishoKK, generateTokijikoKK: generateTokijikoKK
   };
   global.HN = HN;
   if (typeof module !== 'undefined' && module.exports) module.exports = HN;

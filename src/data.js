@@ -11,6 +11,12 @@
       url: 'https://www.moj.go.jp/MINJI/minji06_00141.html' },
     MOJ_HOUMUKYOKU: { label: '法務局：商業・法人登記の申請',
       url: 'https://houmukyoku.moj.go.jp/homu/COMMERCE_11-1.html' },
+    MOJ_KK: { label: '法務省：株式会社の設立手続（発起設立）について',
+      url: 'https://www.moj.go.jp/MINJI/minji06_00134.html' },
+    KOSHONIN_FEE: { label: '日本公証人連合会：定款認証の費用（Q3）',
+      url: 'https://www.koshonin.gr.jp/notary/ow09_4/9_4_q03' },
+    NTA_TOROKU: { label: '国税庁：登録免許税の税額表（No.7191）',
+      url: 'https://www.nta.go.jp/taxes/shiraberu/taxanswer/inshi/7191.htm' },
     NTA: { label: '国税庁：法人設立届出書・青色申告の承認申請',
       url: 'https://www.nta.go.jp/taxes/tetsuzuki/shinsei/annai/hojin/annai/1554_11.htm' },
     NTA_KAIGYO: { label: '国税庁：個人事業を開業する場合（開業届）',
@@ -33,8 +39,8 @@
     appName: '法人ナビ',
     tagline: '理想の形から、開業・設立まで導く',
     version: '2.1',
-    lastVerified: '2026-07-11',
-    scopeNote: '手続きナビは現在「個人事業・合同会社」に対応。株式会社・一般社団法人は診断と概要のみ（詳細ガイドは順次対応）。現物出資・法人が社員・許認可業種などの特殊ケースは対象外です。',
+    lastVerified: '2026-07-13',
+    scopeNote: '手続きナビは現在「個人事業・合同会社・株式会社」に対応。一般社団法人は診断と概要のみ（詳細ガイドは順次対応）。株式会社は発起設立・一人株式会社を基本形とし、現物出資・募集設立・取締役会設置などの特殊ケースは対象外です。',
     disclaimer: '本ツールは情報提供を目的とした支援ツールであり、法的助言・税務助言・登記代理ではありません。診断結果は「向いている傾向」の目安です。制度・税率・様式は改正されることがあります。実際の判断・提出前に必ず公式情報および税理士・司法書士等の専門家でご確認ください。'
   };
 
@@ -141,12 +147,12 @@
         pros: ['株式会社より安く設立（法定 約6万円〜）', '定款の公証人認証が不要', '有限責任・法人の信用が得られる'],
         cons: ['株式会社より知名度・信用がやや劣る場合がある', '株式による資金調達はできない'],
         source: SOURCES.MOJ_LLC },
-      kk: { key: 'kk', name: '株式会社', short: '株式会社', flow: 'kk', buildStatus: 'overview',
+      kk: { key: 'kk', name: '株式会社', short: '株式会社', flow: 'kk', buildStatus: 'full',
         tagline: '信用・資金調達・拡大を重視する人に。',
-        costText: '法定費用 約20〜25万円',
+        costText: '法定費用 約20〜25万円（電子定款で約19万円〜）',
         pros: ['社会的信用が高い', '株式発行で資金調達しやすい', '上場を目指せる'],
         cons: ['設立費用が高い', '定款の公証人認証が必要', '決算公告の義務がある'],
-        source: SOURCES.MOJ_HOUMUKYOKU },
+        source: SOURCES.MOJ_KK },
       shadan: { key: 'shadan', name: '一般社団法人', short: '一般社団', flow: 'shadan', buildStatus: 'overview',
         tagline: '非営利・公益的な活動を法人でやりたい人に。',
         costText: '法定費用 約11万円〜',
@@ -251,15 +257,67 @@
       ]
     },
 
-    // ---- 株式会社（概要のみ・順次対応） ----
+    // ---- 株式会社（フル対応・発起設立／一人株式会社を基本形に） ----
     kk: {
-      overview: {
-        summary: '株式会社は信用・資金調達に強い一方、定款の公証人認証が必要で、設立コスト（法定 約20〜25万円）も高めです。',
-        steps: ['基本事項の決定（発起人・株式・資本金・機関設計 など）', '定款の作成 →【公証役場で認証（合同会社と違い必須）】',
-          '出資金の払込', '設立時取締役などの選任・調査', '法務局へ設立登記（登録免許税は資本金×0.7%、最低15万円）', '設立後の届出（税務署・年金・自治体 など）'],
-        note: '株式会社の詳細な手続きガイド・書類自動生成は順次対応予定です。現時点では概要と公式情報リンクのみ提供します。'
-      },
-      source: SOURCES.MOJ_HOUMUKYOKU
+      dateField: 'foundedDate', dateLabel: '設立予定日（登記申請日）',
+      inputFields: [
+        ['shomei', '商号', '例）テスト株式会社（「株式会社」を含めます）', 'text', true],
+        ['mokuteki', '事業目的', '例）ソフトウェアの企画・開発・販売', 'text', true],
+        ['honten', '本店所在地', '例）東京都渋谷区（定款は最小行政区画まで／申請書は番地まで）', 'text', true],
+        ['shihonkin', '資本金（円）', '例）1000000', 'number', true],
+        ['hakkoStock', '設立時発行株式数', '例）100', 'number', true],
+        ['daihyoName', '発起人＝設立時代表取締役 氏名', '例）山田太郎', 'text', true],
+        ['daihyoAddr', '発起人＝設立時代表取締役 住所', '例）東京都渋谷区○○1-2-3', 'text', true],
+        ['fiscalEnd', '事業年度の末日', '例）3月31日', 'text', true],
+        ['foundedDate', '設立予定日（登記申請日）', '', 'date', true]
+      ],
+      steps: [
+        { id: 'ks1', phase: '設立', title: '1. 基本事項を決める',
+          desc: '商号・事業目的・本店所在地・資本金・設立時発行株式数・機関設計・事業年度を決めます。商号には「株式会社」を含めます。', source: SOURCES.MOJ_KK },
+        { id: 'ks2', phase: '設立', title: '2. 会社の実印を作る',
+          desc: '会社の代表者印（実印）を作成します。実費の目安は1万〜1.5万円。', source: SOURCES.MOJ_KK },
+        { id: 'ks3', phase: '設立', title: '3. 定款を作成し、公証役場で認証を受ける',
+          desc: '株式会社は公証人の認証が必須（合同会社と違う点）。認証手数料は資本金100万円未満3万円／100万円以上300万円未満4万円／それ以上5万円（一定要件で1.5万円）。電子定款なら収入印紙4万円が不要（紙は4万円必要）。', source: SOURCES.KOSHONIN_FEE },
+        { id: 'ks4', phase: '設立', title: '4. 出資金を払い込む',
+          desc: '発起人の個人口座へ資本金を払い込み、通帳のコピーで証明します。', source: SOURCES.MOJ_KK },
+        { id: 'ks5', phase: '設立', title: '5. 設立時取締役を選任し、設立事項を調査する',
+          desc: '設立時取締役等を選任し、出資の履行・設立手続が法令・定款に適合するか調査して調査報告書を作成します。', source: SOURCES.MOJ_KK },
+        { id: 'ks6', phase: '設立', title: '6. 登記書類を作成・製本する',
+          desc: '認証済み定款・発起人の同意書・設立時取締役等の就任承諾書・調査報告書・払込証明書・印鑑証明書・印鑑届書・資本金の額の計上に関する証明書 等を揃えます。', source: SOURCES.MOJ_KK },
+        { id: 'ks7', phase: '設立', title: '7. 法務局へ設立登記を申請する',
+          desc: '書面（持参・郵送）またはオンラインで申請。登録免許税は資本金×0.7%、最低15万円。申請日が原則「設立日」。', source: SOURCES.MOJ_KK },
+        { id: 'ks8', phase: '設立後', title: '8. 設立後の届出をする',
+          desc: '税務署・都道府県・年金事務所などへ期限内に届け出ます。「届出・期限」タブで確認してください。', source: SOURCES.NTA }
+      ],
+      filings: [
+        { id: 'kkf_pension', office: '年金事務所', name: '健康保険・厚生年金保険 新規適用届',
+          offsetDays: 5, required: '必須', source: SOURCES.NENKIN, note: '社会保険は法人に加入義務。設立から5日以内。' },
+        { id: 'kkf_tax_setsuritsu', office: '税務署', name: '法人設立届出書',
+          offsetMonths: 2, required: '必須', source: SOURCES.NTA, note: '設立日から2ヶ月以内。' },
+        { id: 'kkf_tax_aoiro', office: '税務署', name: '青色申告の承認申請書',
+          offsetMonths: 3, required: '推奨（節税）', source: SOURCES.NTA, note: '設立から3ヶ月 または 事業年度末の早い方の前日まで。実質的にほぼ必須。' },
+        { id: 'kkf_tax_kyuyo', office: '税務署', name: '給与支払事務所等の開設届出書',
+          offsetMonths: 1, required: '給与を支払う場合は必須', source: SOURCES.NTA, note: '給与支払事務所の開設から1ヶ月以内。役員報酬を出す場合も対象。' },
+        { id: 'kkf_pref', office: '都道府県税事務所', name: '法人設立届出書（都道府県）',
+          depends: 'municipal', required: '必須', source: SOURCES.TOKYO_TAX,
+          note: '期限は自治体により異なる（例：東京都は事業開始日から15日以内）。お住まいの自治体で要確認。' },
+        { id: 'kkf_city', office: '市区町村役場', name: '法人設立届出書（市区町村）',
+          depends: 'municipal', required: '必須（東京23区は不要）', source: SOURCES.TOKYO_TAX,
+          note: '東京23区は区役所への提出不要（都税事務所に一本化）。その他は自治体で要確認。' },
+        { id: 'kkf_rousai', office: '労働基準監督署', name: '労働保険 保険関係成立届',
+          depends: 'employee', required: '従業員を雇う場合', source: SOURCES.EGOV, note: '従業員を雇用した日の翌日から10日以内。' },
+        { id: 'kkf_hello', office: 'ハローワーク', name: '雇用保険 適用事業所設置届',
+          depends: 'employee', required: '従業員を雇う場合', source: SOURCES.EGOV, note: '設置日の翌日から10日以内。' }
+      ],
+      documents: [
+        { id: 'teikan_kk', title: '定款（ドラフト）', fn: 'generateTeikanKK' },
+        { id: 'hokkinin_kk', title: '発起人決定書（ドラフト）', fn: 'generateHokkininKK' },
+        { id: 'shodakusho_kk', title: '就任承諾書（設立時取締役・代表取締役／ドラフト）', fn: 'generateShodakushoKK' },
+        { id: 'chosa_kk', title: '設立時取締役の調査報告書（ドラフト）', fn: 'generateChosaKK' },
+        { id: 'haraikomi_kk', title: '払込証明書（ドラフト）', fn: 'generateHaraikomiKK' },
+        { id: 'shinseisho_kk', title: '株式会社設立登記申請書（ドラフト）', fn: 'generateShinseishoKK' },
+        { id: 'tokijiko_kk', title: '登記すべき事項（テキスト）', fn: 'generateTokijikoKK' }
+      ]
     },
 
     // ---- 一般社団法人（概要のみ・順次対応） ----
@@ -293,8 +351,8 @@
       { text: '定款の作成・法務局への設立登記（自分で or 専門家に依頼）', source: SOURCES.MOJ_LLC }
     ],
     kk: [
-      { text: '設立費用 約20〜25万円を用意する', source: SOURCES.MOJ_HOUMUKYOKU },
-      { text: '定款は公証人の認証が必要（合同会社と違い必須）', source: SOURCES.MOJ_HOUMUKYOKU },
+      { text: '設立費用 約20〜25万円を用意する（電子定款なら約19万円〜）', source: SOURCES.NTA_TOROKU },
+      { text: '定款は公証人の認証が必要（合同会社と違い必須。手数料3万〜5万円）', source: SOURCES.KOSHONIN_FEE },
       { text: '社長ひとりでも社会保険に加入する', source: SOURCES.NENKIN_TEKIYO },
       { text: '赤字でも法人住民税の均等割（年約7万円〜）を払う覚悟', source: SOURCES.SOUMU_JUMINZEI },
       { text: '決算公告など、会社としての運営義務を負う', source: null }
