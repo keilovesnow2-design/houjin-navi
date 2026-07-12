@@ -136,10 +136,20 @@ test('countUnsure: わからない選択数を数える', () => {
 });
 
 // ---- 満点・相性（100点到達可能） ----
-test('typeMax: 各タイプの満点（合同=17・個人=23）', () => {
+test('typeMax: 各タイプの満点（合同=17・個人=23・一般社団=17）', () => {
   const mx = HN.typeMax(Q, TYPES);
   assert.strictEqual(mx.llc, 17);
   assert.strictEqual(mx.kojin, 23);
+  assert.strictEqual(mx.shadan, 17); // 実務系5問へのshadan加点で llc と対称化
+});
+test('scoreDiagnosis: 非営利志向＋実務は身軽 → 一般社団が個人事業を上回る（是正）', () => {
+  // 価値観系(q1/q3/q8/q10)は全て非営利、実務系は一人・自己資金・身軽・低リスク・まず試す
+  const ans = { q1: 3, q2: 0, q3: 4, q4: 0, q5: 0, q6: 0, q7: 0, q8: 2, q9: 0, q10: 3 };
+  const res = HN.scoreDiagnosis(ans, Q, TYPES);
+  assert.strictEqual(res.ranked[0].type, 'shadan');
+  const shadan = res.ranked.find(r => r.type === 'shadan').score;
+  const kojin = res.ranked.find(r => r.type === 'kojin').score;
+  assert.ok(shadan > kojin, '一般社団(' + shadan + ')が個人事業(' + kojin + ')を上回るべき');
 });
 test('相性は100%に到達できる（合同一直線の回答）', () => {
   const ans = { q1: 1, q2: 0, q3: 0, q4: 1, q5: 1, q6: 0, q7: 1, q8: 0, q9: 1, q10: 1 }; // 各問の合同最大

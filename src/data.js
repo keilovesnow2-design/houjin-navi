@@ -68,7 +68,7 @@
         hint: '法人は社長1人でも、会社から役員報酬を受け取るなら社会保険（健康保険・厚生年金）への加入が原則義務です。人を雇うとさらに手続きが増えます。',
         hintSource: SOURCES.NENKIN_TEKIYO,
         options: [
-          { label: 'ずっと一人でやる', weights: { kojin: 2, llc: 1 } },
+          { label: 'ずっと一人でやる', weights: { kojin: 2, llc: 1, shadan: 1 } },
           { label: '将来は雇うかもしれない', weights: { llc: 1, kk: 1 } },
           { label: 'すぐに雇う予定', weights: { kk: 1, llc: 1 },
             insight: '従業員を雇うと労働保険（労災・雇用保険）の加入手続きが必要になります。' }
@@ -93,7 +93,7 @@
       { id: 'q5', section: 'sec2', text: '事業資金の集め方は？',
         hint: '投資家から出資を受けたり、株式で資金を集めて拡大・上場を目指すなら株式会社が基本です。',
         options: [
-          { label: '自己資金の範囲でコツコツ', weights: { kojin: 2, llc: 1 } },
+          { label: '自己資金の範囲でコツコツ', weights: { kojin: 2, llc: 1, shadan: 1 } },
           { label: '銀行などからの融資も使うかも', weights: { kojin: 1, llc: 2, kk: 1 } },
           { label: '投資家からの出資・株式発行・上場も視野', weights: { kk: 3 },
             insight: '出資・上場を本気で目指すなら株式会社。合同会社は株式による資金調達ができません。' }
@@ -102,14 +102,14 @@
         hint: '法人は赤字でも法人住民税の均等割（標準で最低・年約7万円／自治体・資本金による）がかかり、決算や社会保険の手間も生じます。',
         hintSource: SOURCES.SOUMU_JUMINZEI,
         options: [
-          { label: 'とにかく身軽・低コストがいい', weights: { kojin: 3, llc: 1 },
+          { label: 'とにかく身軽・低コストがいい', weights: { kojin: 3, llc: 1, shadan: 1 },
             insight: '個人事業は登記・維持費がほぼ不要で最も身軽。まず個人事業→軌道に乗ったら法人化（法人成り）という順番もあります。' },
           { label: '信用や節税のためなら手間・コストはかけてよい', weights: { llc: 1, kk: 1, shadan: 1 } }
         ] },
       { id: 'q7', section: 'sec3', text: '事業で抱える「借金・在庫・賠償」などのリスクは？',
         hint: '個人事業は無限責任（事業の負債に個人の財産まで責任）。法人は原則有限責任（出資の範囲）ですが、借入時の個人保証など例外もあります。',
         options: [
-          { label: '小さい（大きな仕入れ・借入・賠償リスクは少ない）', weights: { kojin: 2, llc: 1 } },
+          { label: '小さい（大きな仕入れ・借入・賠償リスクは少ない）', weights: { kojin: 2, llc: 1, shadan: 1 } },
           { label: 'それなりにある（在庫・借入・対人賠償など）', weights: { llc: 2, kk: 2, shadan: 1 },
             insight: 'リスクが大きい事業ほど、有限責任の法人（合同会社・株式会社）を検討する価値があります。' }
         ] },
@@ -122,7 +122,7 @@
         ] },
       { id: 'q9', section: 'sec4', text: '事業をどれくらい続ける想定ですか？',
         options: [
-          { label: 'まず試してみたい', weights: { kojin: 2 } },
+          { label: 'まず試してみたい', weights: { kojin: 2, shadan: 1 } },
           { label: '長く本業として続けたい', weights: { llc: 2, kk: 1 } },
           { label: '家族や次世代に引き継ぎたい', weights: { kk: 2, llc: 1 },
             insight: '事業承継や出資者の参加を考えるなら、持分・株式で引き継げる法人が有利です。' }

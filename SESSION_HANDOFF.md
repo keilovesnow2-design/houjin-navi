@@ -10,10 +10,10 @@
 5. 実装: `src/data.js`（コンテンツ・診断定義）→ `src/app.js`（ロジック・UI）
 
 ## 1. 現在の状態（実測 2026-07-13）
-- ブランチ: `main`。v2.2（株式会社）は commit `e569af9` で **push 済み・本番反映済み**。v2.3（一般社団法人）は**未コミットの変更あり**（`src/data.js` `src/app.js` `tests/unit/core.test.js` `PROGRESS.md` `SESSION_HANDOFF.md`）＝**本番未反映**。
-- 最新の機能コミット（HEAD）: `e569af9`（v2.2 株式会社）。
-- 単体テスト: `node --test` → **43 pass / 0 fail**
-- 本番: https://houjin-navi.kei-love-snow2.workers.dev （HTTP 200・v2.2 状態。v2.3 は未反映）
+- ブランチ: `main`。v2.2（株式会社）`e569af9`・v2.3（一般社団）`78d0e09` は **push 済み・本番反映済み**。v2.4（診断重み微調整）は**未コミットの変更あり**（`src/data.js` `tests/unit/core.test.js` `PROGRESS.md` `SESSION_HANDOFF.md`）。
+- 最新の機能コミット（HEAD）: `78d0e09`（v2.3 一般社団法人）。
+- 単体テスト: `node --test` → **44 pass / 0 fail**
+- 本番: https://houjin-navi.kei-love-snow2.workers.dev （HTTP 200・v2.3 状態。v2.4 は反映待ち）
 - GitHub: https://github.com/keilovesnow2-design/houjin-navi （push で自動デプロイ）
 - チェックポイントtag: `checkpoint-2026-07-12`（v2.1 完成状態）
 
@@ -26,9 +26,9 @@
   - 一般社団法人（v2.3・未push）: 書類6種。登録免許税6万定額・定款認証5万・印紙不要。
 
 ## 3. 次セッションの最優先アクション（優先順）
-1. **（未反映なら先に）v2.3 を commit → push**（自動デプロイで本番反映）。push 前に `node --test` 緑を再確認。
-2. 診断の設問・重みの微調整（`src/data.js` の `DIAGNOSIS.questions[].options[].weights` / `types` のみで可能）。
-3. （任意）自治体別の届出期限DB拡充。一般社団の「非営利型／収益事業の有無」で税務の扱いが変わる点の精緻化。
+1. **（未反映なら先に）v2.4 を commit → push**（自動デプロイで本番反映）。push 前に `node --test` 緑を再確認。
+2. （任意）自治体別の届出期限DB拡充。一般社団の「非営利型／収益事業の有無」で税務の扱いが変わる点の精緻化。
+3. （任意）診断のさらなる微調整。**注意**: ランキングは `scoreDiagnosis` の `match`（score/typeMax の％）順（app.js:79）。生スコア順ではない点を前提に検討すること。
 
 ## 4. やってはいけないこと
 - 数値・期限を出典なしで `data.js` に書かない（CONSTRAINTS C-02）。掲載はA/B二源以上一致のみ。
