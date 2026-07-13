@@ -34,13 +34,29 @@
     EGOV: { label: 'e-Gov / 登記・供託オンライン申請システム',
       url: 'https://www.touki-kyoutaku-online.moj.go.jp/' },
     TOKYO_TAX: { label: '東京都主税局：法人設立・設置届出',
-      url: 'https://www.tax.metro.tokyo.lg.jp/' }
+      url: 'https://www.tax.metro.tokyo.lg.jp/' },
+    PREF_HOKKAIDO: { label: '北海道：法人二税の届出関係Q&A',
+      url: 'https://www.pref.hokkaido.lg.jp/sm/zim/faq/faq_05.html' },
+    PREF_CHIBA: { label: '千葉県：県税Q&A（法人設立の届出）',
+      url: 'https://www.pref.chiba.lg.jp/zeimu/faq/010.html' },
+    PREF_KANAGAWA: { label: '神奈川県：県税Q&A 法人県民税・事業税',
+      url: 'https://www.pref.kanagawa.jp/zei/kenzei/a001/b006/004.html' },
+    PREF_AICHI: { label: '愛知県：県税Q&A（法人県民税・法人事業税）',
+      url: 'https://www.pref.aichi.jp/soshiki/zeimu/0000034242.html' },
+    PREF_OSAKA: { label: '大阪府：法人府民税・事業税の法人設立等申告書',
+      url: 'https://www.pref.osaka.lg.jp/faq/faq_000328.html' },
+    PREF_SAITAMA: { label: '埼玉県：法人県民税・事業税「県内に事務所等を設置したら」',
+      url: 'https://www.pref.saitama.lg.jp/a0209/z-kurashiindex/z-2-hojin.html' },
+    PREF_KYOTO: { label: '京都府：府税Q&A 法人府民税・法人事業税（法人届出関係）',
+      url: 'https://www.pref.kyoto.jp/zeimu/11600041.html' },
+    PREF_HYOGO: { label: '兵庫県：法人県民税・法人事業税について（Q1）',
+      url: 'https://web.pref.hyogo.lg.jp/kk22/faq/houjin/houjin1.html' }
   };
 
   var META = {
     appName: '法人ナビ',
     tagline: '理想の形から、開業・設立まで導く',
-    version: '2.1',
+    version: '2.5',
     lastVerified: '2026-07-13',
     scopeNote: '手続きナビは「個人事業・合同会社・株式会社・一般社団法人」に対応。株式会社は発起設立・一人株式会社、一般社団法人は理事会非設置の通常型を基本形とし、現物出資・募集設立・取締役会設置・公益／非営利型認定・許認可業種などの特殊ケースは対象外です。',
     disclaimer: '本ツールは情報提供を目的とした支援ツールであり、法的助言・税務助言・登記代理ではありません。診断結果は「向いている傾向」の目安です。制度・税率・様式は改正されることがあります。実際の判断・提出前に必ず公式情報および税理士・司法書士等の専門家でご確認ください。'
@@ -240,10 +256,10 @@
         { id: 'f_tax_kyuyo', office: '税務署', name: '給与支払事務所等の開設届出書',
           offsetMonths: 1, required: '給与を支払う場合は必須', source: SOURCES.NTA, note: '給与支払事務所の開設から1ヶ月以内。役員報酬を出す場合も対象。' },
         { id: 'f_pref', office: '都道府県税事務所', name: '法人設立届出書（都道府県）',
-          depends: 'municipal', required: '必須', source: SOURCES.TOKYO_TAX,
+          depends: 'municipal', muniRole: 'pref', required: '必須', source: SOURCES.TOKYO_TAX,
           note: '期限は自治体により異なる（例：東京都は事業開始日から15日以内）。お住まいの自治体で要確認。' },
         { id: 'f_city', office: '市区町村役場', name: '法人設立届出書（市区町村）',
-          depends: 'municipal', required: '必須（東京23区は不要）', source: SOURCES.TOKYO_TAX,
+          depends: 'municipal', muniRole: 'city', required: '必須（東京23区は不要）', source: SOURCES.TOKYO_TAX,
           note: '東京23区は区役所への提出不要（都税事務所に一本化）。その他は自治体で要確認。' },
         { id: 'f_rousai', office: '労働基準監督署', name: '労働保険 保険関係成立届',
           depends: 'employee', required: '従業員を雇う場合', source: SOURCES.EGOV, note: '従業員を雇用した日の翌日から10日以内。' },
@@ -301,10 +317,10 @@
         { id: 'kkf_tax_kyuyo', office: '税務署', name: '給与支払事務所等の開設届出書',
           offsetMonths: 1, required: '給与を支払う場合は必須', source: SOURCES.NTA, note: '給与支払事務所の開設から1ヶ月以内。役員報酬を出す場合も対象。' },
         { id: 'kkf_pref', office: '都道府県税事務所', name: '法人設立届出書（都道府県）',
-          depends: 'municipal', required: '必須', source: SOURCES.TOKYO_TAX,
+          depends: 'municipal', muniRole: 'pref', required: '必須', source: SOURCES.TOKYO_TAX,
           note: '期限は自治体により異なる（例：東京都は事業開始日から15日以内）。お住まいの自治体で要確認。' },
         { id: 'kkf_city', office: '市区町村役場', name: '法人設立届出書（市区町村）',
-          depends: 'municipal', required: '必須（東京23区は不要）', source: SOURCES.TOKYO_TAX,
+          depends: 'municipal', muniRole: 'city', required: '必須（東京23区は不要）', source: SOURCES.TOKYO_TAX,
           note: '東京23区は区役所への提出不要（都税事務所に一本化）。その他は自治体で要確認。' },
         { id: 'kkf_rousai', office: '労働基準監督署', name: '労働保険 保険関係成立届',
           depends: 'employee', required: '従業員を雇う場合', source: SOURCES.EGOV, note: '従業員を雇用した日の翌日から10日以内。' },
@@ -361,10 +377,10 @@
         { id: 'shf_tax_kyuyo', office: '税務署', name: '給与支払事務所等の開設届出書',
           offsetMonths: 1, required: '給与を支払う場合は必須', source: SOURCES.NTA, note: '給与支払事務所の開設から1ヶ月以内。役員報酬を出す場合も対象。' },
         { id: 'shf_pref', office: '都道府県税事務所', name: '法人設立届出書（都道府県）',
-          depends: 'municipal', required: '必須', source: SOURCES.TOKYO_TAX,
+          depends: 'municipal', muniRole: 'pref', required: '必須', source: SOURCES.TOKYO_TAX,
           note: '期限は自治体により異なる（例：東京都は事業開始日から15日以内）。非営利型で収益事業がない場合の均等割の扱いも含め、お住まいの自治体で要確認。' },
         { id: 'shf_city', office: '市区町村役場', name: '法人設立届出書（市区町村）',
-          depends: 'municipal', required: '必須（東京23区は不要）', source: SOURCES.TOKYO_TAX,
+          depends: 'municipal', muniRole: 'city', required: '必須（東京23区は不要）', source: SOURCES.TOKYO_TAX,
           note: '東京23区は区役所への提出不要（都税事務所に一本化）。その他は自治体で要確認。' },
         { id: 'shf_rousai', office: '労働基準監督署', name: '労働保険 保険関係成立届',
           depends: 'employee', required: '従業員を雇う場合', source: SOURCES.EGOV, note: '従業員を雇用した日の翌日から10日以内。' },
@@ -416,8 +432,66 @@
     ]
   };
 
+  // 自治体別の届出期限DB（法人設立時の都道府県税事務所・市区町村への設立届）。
+  // 掲載は各自治体の公式ページで期限を直接確認できたもののみ（C-02）。未掲載の自治体は
+  // UI上「要確認（都道府県を選択）」を表示する。pref: 都道府県税事務所への設立届。
+  // city: 市区町村への設立届に関する注記。offsetDays/offsetMonths は設立日(dateField)起点。
+  // prompt:true は「速やかに」＝明確な日数の定めがない自治体（日付は計算しない）。
+  // 並び順は都道府県コード順。
+  var MUNICIPAL = {
+    lastVerified: '2026-07-13',
+    note: '掲載は公式ページで確認できた都道府県のみ。「すみやかに」は明確な日数の定めがないことを示します。未掲載・不明の場合は各自治体の公式情報で必ずご確認ください。',
+    prefectures: [
+      { key: 'hokkaido', name: '北海道',
+        pref: { offsetMonths: 2, source: SOURCES.PREF_HOKKAIDO,
+          note: '道税事務所へ、設立の日から2か月以内（先に事業を開始した場合は開始日から10日以内）。' },
+        city: { source: SOURCES.PREF_HOKKAIDO,
+          note: '市区町村（札幌市など）にも別途「法人設立・設置届出書」を提出。' } },
+      { key: 'saitama', name: '埼玉県',
+        pref: { prompt: true, source: SOURCES.PREF_SAITAMA,
+          note: '県税事務所へ、設立後すみやかに（明確な日数の定めなし）。' },
+        city: { source: SOURCES.PREF_SAITAMA,
+          note: '市区町村役場（政令市は市税事務所）にも別途「法人設立届出書」を提出。' } },
+      { key: 'chiba', name: '千葉県',
+        pref: { offsetMonths: 1, source: SOURCES.PREF_CHIBA,
+          note: '県税事務所へ、設立の日から1か月以内。' },
+        city: { source: SOURCES.PREF_CHIBA,
+          note: '市区町村役場（政令市は市税事務所）にも別途「法人設立届出書」を提出。' } },
+      { key: 'tokyo', name: '東京都',
+        pref: { offsetDays: 15, source: SOURCES.TOKYO_TAX,
+          note: '都税事務所へ、設立（事業開始）の日から15日以内。' },
+        city: { source: SOURCES.TOKYO_TAX,
+          note: '東京23区内は区役所への提出不要（都税事務所に一本化）。多摩地域など市部は各市区町村役場へも別途提出。' } },
+      { key: 'kanagawa', name: '神奈川県',
+        pref: { offsetMonths: 2, source: SOURCES.PREF_KANAGAWA,
+          note: '県税事務所へ、事業を開始した日から2か月以内。' },
+        city: { source: SOURCES.PREF_KANAGAWA,
+          note: '市区町村役場（政令市は市税事務所）にも別途「法人設立届出書」を提出。' } },
+      { key: 'aichi', name: '愛知県',
+        pref: { offsetMonths: 2, source: SOURCES.PREF_AICHI,
+          note: '県税事務所へ、設立の日から2か月以内。' },
+        city: { source: SOURCES.PREF_AICHI,
+          note: '市区町村役場（政令市は市税事務所）にも別途「法人設立届出書」を提出。' } },
+      { key: 'kyoto', name: '京都府',
+        pref: { prompt: true, source: SOURCES.PREF_KYOTO,
+          note: '京都地方税機構（府税）へ、設立後すみやかに（明確な日数の定めなし）。' },
+        city: { source: SOURCES.PREF_KYOTO,
+          note: '市区町村役場（京都市は市税事務所）にも別途「法人設立届出書」を提出。' } },
+      { key: 'osaka', name: '大阪府',
+        pref: { offsetMonths: 2, source: SOURCES.PREF_OSAKA,
+          note: '府税事務所へ、設立の日から2か月以内（法人設立等申告書）。' },
+        city: { source: SOURCES.PREF_OSAKA,
+          note: '市区町村役場（政令市は市税事務所）にも別途「法人設立届出書」を提出。' } },
+      { key: 'hyogo', name: '兵庫県',
+        pref: { prompt: true, source: SOURCES.PREF_HYOGO,
+          note: '県税事務所へ、設立後すみやかに（明確な日数の定めなし）。' },
+        city: { source: SOURCES.PREF_HYOGO,
+          note: '市区町村役場（政令市は市税事務所）にも別途「法人設立届出書」を提出。' } }
+    ]
+  };
+
   var DATA = { SOURCES: SOURCES, META: META, DIAGNOSIS: DIAGNOSIS, FLOWS: FLOWS,
-    IDEAL_REQUIREMENTS: IDEAL_REQUIREMENTS, TYPE_KEYS: ['kojin', 'llc', 'kk', 'shadan'] };
+    IDEAL_REQUIREMENTS: IDEAL_REQUIREMENTS, MUNICIPAL: MUNICIPAL, TYPE_KEYS: ['kojin', 'llc', 'kk', 'shadan'] };
 
   global.HN_DATA = DATA;
   if (typeof module !== 'undefined' && module.exports) module.exports = DATA;

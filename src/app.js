@@ -19,13 +19,32 @@
     var lastDay = new Date(Date.UTC(ny, nm + 1, 0)).getUTCDate();
     return ny + '-' + pad(nm + 1) + '-' + pad(Math.min(d, lastDay));
   }
-  function computeDeadlines(baseISO, filings) {
+  // muni = DATA.MUNICIPAL.prefectures の1件（未選択なら null）。muniRole を持つ届出の
+  // 期限・注記・出典を選択自治体から解決する。muni 未指定なら従来どおり（後方互換）。
+  function findMunicipal(key) {
+    var list = (DATA.MUNICIPAL && DATA.MUNICIPAL.prefectures) || [];
+    for (var i = 0; i < list.length; i++) if (list[i].key === key) return list[i];
+    return null;
+  }
+  function computeDeadlines(baseISO, filings, muni) {
     filings = filings || [];
     var out = filings.map(function (f) {
-      var dueISO = null;
-      if (baseISO && typeof f.offsetDays === 'number') dueISO = addDays(baseISO, f.offsetDays);
+      var dueISO = null, note = f.note, required = f.required, source = f.source, resolved = false, prompt = false;
+      if (f.muniRole && muni) {
+        var m = f.muniRole === 'pref' ? muni.pref : muni.city;
+        if (m) {
+          resolved = true;
+          if (m.note) note = m.note;
+          if (m.source) source = m.source;
+          if (f.muniRole === 'pref') {
+            if (m.prompt) prompt = true; // 速やかに（日数の定めなし）
+            else if (baseISO && typeof m.offsetDays === 'number') dueISO = addDays(baseISO, m.offsetDays);
+            else if (baseISO && typeof m.offsetMonths === 'number') dueISO = addMonths(baseISO, m.offsetMonths);
+          }
+        }
+      } else if (baseISO && typeof f.offsetDays === 'number') dueISO = addDays(baseISO, f.offsetDays);
       else if (baseISO && typeof f.offsetMonths === 'number') dueISO = addMonths(baseISO, f.offsetMonths);
-      return { id: f.id, office: f.office, name: f.name, dueISO: dueISO, required: f.required, note: f.note, source: f.source, depends: f.depends || null };
+      return { id: f.id, office: f.office, name: f.name, dueISO: dueISO, required: required, note: note, source: source, depends: f.depends || null, muniRole: f.muniRole || null, resolved: resolved, prompt: prompt };
     });
     out.sort(function (a, b) {
       if (a.dueISO && b.dueISO) return a.dueISO < b.dueISO ? -1 : (a.dueISO > b.dueISO ? 1 : 0);
@@ -319,7 +338,7 @@
     addDays: addDays, addMonths: addMonths, computeDeadlines: computeDeadlines, validateCompany: validateCompany, computeProgress: computeProgress,
     scoreDiagnosis: scoreDiagnosis, analyzeIdeal: analyzeIdeal, typeMax: typeMax, idealStrengths: idealStrengths, gapHints: gapHints,
     collectDiagnosisInsights: collectDiagnosisInsights,
-    countAnswered: countAnswered, countUnsure: countUnsure, buildICS: buildICS, requiredOf: requiredOf,
+    countAnswered: countAnswered, countUnsure: countUnsure, buildICS: buildICS, requiredOf: requiredOf, findMunicipal: findMunicipal,
     generateTeikan: generateTeikan, generateShodakusho: generateShodakusho, generateHaraikomi: generateHaraikomi,
     generateShinseisho: generateShinseisho, generateTokijiko: generateTokijiko, generateKaigyoGuide: generateKaigyoGuide, generateAoiroGuide: generateAoiroGuide,
     generateTeikanKK: generateTeikanKK, generateHokkininKK: generateHokkininKK, generateShodakushoKK: generateShodakushoKK,
@@ -553,15 +572,35 @@
     }).join('');
     return '<section class="card"><h3>書類の作成</h3><p class="muted">入力内容から下書きを生成しました。各書類は<b>ドラフト</b>です。提出前に必ず公式様式・専門家でご確認ください。</p></section>' + docs;
   }
+  function dueCell(d, prefSelected) {
+    if (d.dueISO) return jdate(d.dueISO);
+    if (d.prompt) return '<span class="muted">すみやかに<br>（日数の定めなし）</span>';
+    if (d.depends === 'employee') return '<span class="muted">要確認（従業員雇用時）</span>';
+    if (d.muniRole === 'city') return '<span class="muted">' + (prefSelected ? '各市区町村で確認' : '要確認（都道府県を選択）') + '</span>';
+    if (d.muniRole === 'pref') return '<span class="muted">要確認（都道府県を選択）</span>';
+    return '<span class="muted">要確認</span>';
+  }
+  function muniSelector() {
+    var prefs = (DATA.MUNICIPAL && DATA.MUNICIPAL.prefectures) || [];
+    if (!prefs.length) return '';
+    var sel = state.company.prefecture || '';
+    var opts = '<option value="">選択してください（未選択＝要確認）</option>' +
+      prefs.map(function (p) { return '<option value="' + esc(p.key) + '"' + (p.key === sel ? ' selected' : '') + '>' + esc(p.name) + '</option>'; }).join('') +
+      '<option value="other"' + (sel === 'other' ? ' selected' : '') + '>その他の都道府県（要確認）</option>';
+    return '<label class="field muni"><span>本店所在地の都道府県（自治体別の期限を反映）</span><select id="muni-select">' + opts + '</select></label>' +
+      '<p class="muted small">' + esc((DATA.MUNICIPAL && DATA.MUNICIPAL.note) || '') + '</p>';
+  }
   function tabDeadlines() {
-    var flow = currentFlow(); var base = state.company[flow.dateField]; var dls = HN.computeDeadlines(base, flow.filings);
+    var flow = currentFlow(); var base = state.company[flow.dateField];
+    var muni = HN.findMunicipal(state.company.prefecture); var prefSelected = !!muni;
+    var dls = HN.computeDeadlines(base, flow.filings, muni);
     var rows = dls.map(function (d) {
-      var due = d.dueISO ? jdate(d.dueISO) : '<span class="muted">要確認（' + (d.depends === 'employee' ? '従業員雇用時' : '自治体により異なる') + '）</span>';
+      var due = dueCell(d, prefSelected);
       return '<tr' + (d.dueISO ? '' : ' class="soft"') + '><td>' + esc(d.office) + '</td><td>' + esc(d.name) + '<div class="note">' + esc(d.note || '') + '</div>' + srcLink(d.source) + '</td><td class="req">' + esc(d.required) + '</td><td class="due">' + due + '</td></tr>';
     }).join('');
     var warn = base ? '' : '<p class="warn">⚠ 「基本情報」で' + esc(flow.dateLabel) + 'を入れると、各届出の期限が自動計算されます。</p>';
     var icsBtn = base ? '<button id="ics-btn" class="primary">📅 期限をカレンダー(.ics)に書き出す</button>' : '';
-    return '<section class="card"><h3>届出・期限</h3>' + warn + '<div class="tablewrap"><table class="deadlines"><thead><tr><th>提出先</th><th>書類・注記</th><th>要否</th><th>期限</th></tr></thead><tbody>' + rows + '</tbody></table></div>' + icsBtn + '<p class="muted small">※ 期限は一般的な標準ケースの目安です。各行の出典と自治体の公式情報で必ずご確認ください。</p></section>';
+    return '<section class="card"><h3>届出・期限</h3>' + warn + '<div class="form">' + muniSelector() + '</div><div class="tablewrap"><table class="deadlines"><thead><tr><th>提出先</th><th>書類・注記</th><th>要否</th><th>期限</th></tr></thead><tbody>' + rows + '</tbody></table></div>' + icsBtn + '<p class="muted small">※ 期限は一般的な標準ケースの目安です。各行の出典と自治体の公式情報で必ずご確認ください。</p></section>';
   }
   function viewOverview() {
     var flow = currentFlow(); var t = TYPES[state.selectedType]; var o = flow.overview;
@@ -603,7 +642,8 @@
     Array.prototype.forEach.call(document.querySelectorAll('[data-print]'), function (b) {
       b.onclick = function () { el('print-area').textContent = el('doc-' + b.getAttribute('data-print')).textContent; document.body.classList.add('printing'); window.print(); document.body.classList.remove('printing'); };
     });
-    if (el('ics-btn')) el('ics-btn').onclick = function () { var flow = currentFlow(); downloadFile('todokede.ics', HN.buildICS(HN.computeDeadlines(state.company[flow.dateField], flow.filings)), 'text/calendar'); };
+    if (el('muni-select')) el('muni-select').onchange = function () { state.company.prefecture = el('muni-select').value; saveState(); render(); };
+    if (el('ics-btn')) el('ics-btn').onclick = function () { var flow = currentFlow(); var muni = HN.findMunicipal(state.company.prefecture); downloadFile('todokede.ics', HN.buildICS(HN.computeDeadlines(state.company[flow.dateField], flow.filings, muni)), 'text/calendar'); };
   }
   function bindTypeButtons() {
     Array.prototype.forEach.call(document.querySelectorAll('[data-type]'), function (b) {

@@ -308,3 +308,69 @@ test('buildICS: 期限日のあるものだけVEVENT', () => {
   assert.strictEqual((ics.match(/BEGIN:VEVENT/g) || []).length, dls.filter(d => d.dueISO).length);
   assert.ok(ics.includes('DTSTART;VALUE=DATE:20260806'));
 });
+
+// ---- 自治体別 届出期限DB ----
+test('findMunicipal: keyで都道府県を引ける／未知はnull', () => {
+  assert.strictEqual(HN.findMunicipal('tokyo').name, '東京都');
+  assert.strictEqual(HN.findMunicipal('other'), null);
+  assert.strictEqual(HN.findMunicipal(''), null);
+  assert.strictEqual(HN.findMunicipal(undefined), null);
+});
+
+test('computeDeadlines(自治体): 未選択なら都道府県・市区町村の期限はnull（後方互換）', () => {
+  const dls = HN.computeDeadlines('2026-08-01', DATA.FLOWS.llc.filings); // muni省略
+  assert.strictEqual(dls.find(d => d.id === 'f_pref').dueISO, null);
+  assert.strictEqual(dls.find(d => d.id === 'f_city').dueISO, null);
+});
+
+test('computeDeadlines(自治体): 東京は都道府県税15日・出典は東京都主税局・市区町村は日付なし', () => {
+  const muni = HN.findMunicipal('tokyo');
+  const dls = HN.computeDeadlines('2026-08-01', DATA.FLOWS.llc.filings, muni);
+  const pref = dls.find(d => d.id === 'f_pref');
+  assert.strictEqual(pref.dueISO, '2026-08-16'); // 設立日+15日
+  assert.ok(/15日以内/.test(pref.note));
+  assert.strictEqual(pref.source, DATA.SOURCES.TOKYO_TAX);
+  assert.strictEqual(pref.resolved, true);
+  const city = dls.find(d => d.id === 'f_city');
+  assert.strictEqual(city.dueISO, null); // 市区町村は日数DBなし
+  assert.ok(/23区/.test(city.note));
+});
+
+test('computeDeadlines(自治体): 千葉1か月・神奈川2か月（月オフセット）', () => {
+  const chiba = HN.computeDeadlines('2026-08-01', DATA.FLOWS.kk.filings, HN.findMunicipal('chiba'));
+  assert.strictEqual(chiba.find(d => d.id === 'kkf_pref').dueISO, '2026-09-01');
+  const kanagawa = HN.computeDeadlines('2026-08-01', DATA.FLOWS.shadan.filings, HN.findMunicipal('kanagawa'));
+  assert.strictEqual(kanagawa.find(d => d.id === 'shf_pref').dueISO, '2026-10-01');
+});
+
+test('MUNICIPAL: 全都道府県に出典URLと期限指定(pref)がある', () => {
+  DATA.MUNICIPAL.prefectures.forEach(p => {
+    assert.ok(p.name && p.key, 'name/key欠落');
+    assert.ok(p.pref && p.pref.source && /^https?:\/\//.test(p.pref.source.url), '都道府県 出典欠落: ' + p.key);
+    assert.ok(typeof p.pref.offsetDays === 'number' || typeof p.pref.offsetMonths === 'number' || p.pref.prompt === true, '期限未指定: ' + p.key);
+    assert.ok(p.city && p.city.source && /^https?:\/\//.test(p.city.source.url), '市区町村 出典欠落: ' + p.key);
+  });
+});
+
+test('computeDeadlines(自治体): 兵庫・京都は「すみやかに」＝日付なし・prompt', () => {
+  ['hyogo', 'kyoto', 'saitama'].forEach(key => {
+    const dls = HN.computeDeadlines('2026-08-01', DATA.FLOWS.llc.filings, HN.findMunicipal(key));
+    const pref = dls.find(d => d.id === 'f_pref');
+    assert.strictEqual(pref.dueISO, null, key + ': 日付が付いてはいけない');
+    assert.strictEqual(pref.prompt, true, key + ': promptフラグ');
+    assert.ok(/すみやか/.test(pref.note), key + ': すみやか注記');
+  });
+});
+
+test('buildICS(自治体): すみやかに型はVEVENTを作らない', () => {
+  const dls = HN.computeDeadlines('2026-08-01', DATA.FLOWS.llc.filings, HN.findMunicipal('hyogo'));
+  const ics = HN.buildICS(dls);
+  assert.strictEqual((ics.match(/BEGIN:VEVENT/g) || []).length, dls.filter(d => d.dueISO).length);
+});
+
+test('buildICS(自治体): 東京選択で都道府県税の期限がVEVENTに入る', () => {
+  const muni = HN.findMunicipal('tokyo');
+  const dls = HN.computeDeadlines('2026-08-01', DATA.FLOWS.llc.filings, muni);
+  const ics = HN.buildICS(dls);
+  assert.ok(ics.includes('DTSTART;VALUE=DATE:20260816')); // 都道府県税15日
+});
